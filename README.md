@@ -58,7 +58,16 @@ pnpm lint         # eslint
 pnpm format       # prettier + eslint --fix
 ```
 
-**On-device AI (optional).** The AI features use Chrome's built-in Prompt API — in Chrome 127+ you may need `chrome://flags/#prompt-api-for-gemini-nano` and a one-time model download. No on-device AI? Add a [Gemini key](https://aistudio.google.com/apikey) in *AI Studio → Engine*. Everything non-AI (editing, ATS match, PDF/JSON export, JSON/LinkedIn import) works with no AI at all.
+### On-device AI (optional)
+
+The AI features use **Chrome's built-in Prompt API** (Gemini Nano). To enable it locally in **Chrome 128+**:
+
+1. `chrome://flags/#prompt-api-for-gemini-nano` → **Enabled**
+2. `chrome://flags/#optimization-guide-on-device-model` → **Enabled BypassPerfRequirement**
+3. Relaunch Chrome.
+4. `chrome://components` → **Optimization Guide On Device Model** → *Check for update* (downloads ~2–4 GB once).
+
+No on-device AI (other browsers, or don't want the download)? Add your own **Gemini key** in the app at *AI Studio → Engine* — stored only in your browser. Everything non-AI (editing, ATS match, PDF/JSON export, JSON/LinkedIn import) works with **no AI at all**.
 
 ## Built with
 
