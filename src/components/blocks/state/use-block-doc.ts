@@ -3,6 +3,8 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { enginePrompt, engineReady } from '#/lib/ai/engine'
 import { extractJson } from '#/lib/ai/json'
+import { transformText } from '#/lib/ai/service'
+import type { TextAction } from '#/lib/ai/service'
 import { headerBlock } from '#/lib/blocks/defs/header'
 import type { BlockDoc } from '#/lib/blocks/document'
 import { getSection } from '#/lib/blocks/sections'
@@ -301,6 +303,90 @@ export function useBlockDoc(initial: BlockDoc) {
     [improveWith],
   )
 
+  // Rewrite every bullet in a section in one shot, with the chosen tone/length action.
+  // Same transform the inline ✨ uses, fanned across the section. Undo restores it whole.
+  const onImproveSection = useCallback(
+    (sectionId: string, action: TextAction) => {
+      const sec = docRef.current.sections.find((s) => s.id === sectionId)
+      if (!sec) return
+      const snapshot = sec.items
+      const targets = sec.items.flatMap((item) =>
+        (Array.isArray(item.data.bullets)
+          ? (item.data.bullets as Array<unknown>)
+          : []
+        )
+          .map((b, i) => ({ itemId: item.id, i, text: String(b ?? '') }))
+          .filter((t) => t.text.trim()),
+      )
+      if (!targets.length) {
+        toast.error('No bullet text in this section to improve yet.')
+        return
+      }
+      void (async () => {
+        const id = toast.loading('Improving section on your device…')
+        try {
+          if (!(await engineReady())) {
+            throw new Error('No AI engine is ready — check AI settings.')
+          }
+          const rewrites = await Promise.all(
+            targets.map(async (t) => ({
+              ...t,
+              text: await transformText(t.text, action),
+            })),
+          )
+          const byItem = new Map<string, Map<number, string>>()
+          for (const r of rewrites) {
+            const m = byItem.get(r.itemId) ?? new Map<number, string>()
+            m.set(r.i, r.text)
+            byItem.set(r.itemId, m)
+          }
+          setDoc((d) => ({
+            ...d,
+            sections: d.sections.map((s) =>
+              s.id !== sectionId
+                ? s
+                : {
+                    ...s,
+                    items: s.items.map((it) => {
+                      const m = byItem.get(it.id)
+                      if (!m || !Array.isArray(it.data.bullets)) return it
+                      return {
+                        ...it,
+                        data: {
+                          ...it.data,
+                          bullets: (it.data.bullets as Array<unknown>).map(
+                            (b, i) => m.get(i) ?? String(b ?? ''),
+                          ),
+                        },
+                      }
+                    }),
+                  },
+            ),
+          }))
+          bump()
+          toast.success('Section improved', {
+            id,
+            action: {
+              label: 'Undo',
+              onClick: () => {
+                setDoc((d) => ({
+                  ...d,
+                  sections: d.sections.map((s) =>
+                    s.id === sectionId ? { ...s, items: snapshot } : s,
+                  ),
+                }))
+                bump()
+              },
+            },
+          })
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : 'AI failed', { id })
+        }
+      })()
+    },
+    [bump],
+  )
+
   // The stable editing surface — provided to the document tree via context.
   const actions = useMemo(
     () => ({
@@ -320,6 +406,7 @@ export function useBlockDoc(initial: BlockDoc) {
       onRenameSection,
       onApplyVariants,
       onImproveItem,
+      onImproveSection,
     }),
     [
       onHeaderChange,
@@ -338,6 +425,7 @@ export function useBlockDoc(initial: BlockDoc) {
       onRenameSection,
       onApplyVariants,
       onImproveItem,
+      onImproveSection,
     ],
   )
 

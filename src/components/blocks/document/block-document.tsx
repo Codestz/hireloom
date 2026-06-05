@@ -17,6 +17,8 @@ import { defaultColumn } from '#/lib/templates'
 import type { LayoutKind, ResolvedTokens } from '#/lib/templates'
 import { cn } from '#/lib/utils.ts'
 import { AiEnabledContext } from '#/components/blocks/ai/ai-context'
+import { SectionAiMenu } from '#/components/blocks/ai/section-ai-menu'
+import type { TextAction } from '#/lib/ai/service'
 import { Block } from '#/components/blocks/entry/block'
 import { useBlockDocController } from '#/components/blocks/state/block-doc-context'
 import { EditableText } from '#/components/blocks/fields/editable-text'
@@ -53,6 +55,7 @@ function SectionHeading({
   tokens,
   column,
   onSetColumn,
+  onImprove,
   onRename,
   onSetVariant,
   onDelete,
@@ -65,6 +68,8 @@ function SectionHeading({
   /** When set, show the Left/Right column toggle (two-column layout only). */
   column?: 'side' | 'main'
   onSetColumn?: (column: 'side' | 'main') => void
+  /** When set, show the section-level ✨ improve menu (AI on + section has bullets). */
+  onImprove?: (action: TextAction) => void
   onRename: (heading: string) => void
   onSetVariant: (variantId: string) => void
   onDelete: () => void
@@ -98,6 +103,7 @@ function SectionHeading({
             <ArrowLeftRightIcon className="size-3.5" />
           </button>
         ) : null}
+        {onImprove ? <SectionAiMenu onImprove={onImprove} /> : null}
         <DesignPicker
           type={type}
           variantId={variantId}
@@ -173,6 +179,7 @@ export function BlockDocument({
     onSetColumn,
     onRenameSection,
     onImproveItem,
+    onImproveSection,
   } = useBlockDocController()
   // Whether on-device AI is available — gates the per-block "Improve" button.
   const aiEnabled = useContext(AiEnabledContext)
@@ -189,6 +196,10 @@ export function BlockDocument({
       st.variants[0].Layout
     const sampleData =
       section.items.at(0)?.data ?? (st.def.default() as Record<string, unknown>)
+    // Section-level improve only makes sense where there's prose (bullets) to rewrite.
+    const hasBullets = section.items.some((it) =>
+      Array.isArray(it.data.bullets),
+    )
     return (
       <>
         <section
@@ -209,6 +220,11 @@ export function BlockDocument({
             onSetColumn={
               layout === 'sidebar'
                 ? (c) => onSetColumn(section.id, c)
+                : undefined
+            }
+            onImprove={
+              aiEnabled && hasBullets
+                ? (action) => onImproveSection(section.id, action)
                 : undefined
             }
             onRename={(h) => onRenameSection(section.id, h)}
