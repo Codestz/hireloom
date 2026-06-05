@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # App dependencies — grouped into one PR/week so a solo maintainer isn't flooded.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dependencies:
+        patterns: ["*"]
+  # Keep the GitHub Actions themselves current.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

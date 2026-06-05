@@ -1,0 +1,32 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.env
+.nitro
+.tanstack
+.wrangler
+.output
+.vinxi
+__unconfig*
+todos.json
+
+# Local test fixtures (personal data — never commit)
+tests/fixtures/
+
+# Internal planning/design notes + agent memories (kept locally, not published)
+.docs/
+.serena/
+
+# Temp import scratch
+.tmp-*
+
+# Env
+.env.local
+.vercel
+
+# Editor / tooling
+.vscode/
+.mcp.json
+.idea/

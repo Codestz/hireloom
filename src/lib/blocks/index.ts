@@ -1,0 +1,17 @@
+// Register block definitions (side-effect imports).
+import './defs/header'
+import './defs/experience'
+import './defs/education'
+import './defs/project'
+import './defs/skills'
+import './defs/certification'
+import './defs/languages'
+import './defs/award'
+import './defs/volunteer'
+import './defs/publication'
+import './defs/reference'
+import './defs/custom'
+
+export * from './types'
+export * from './registry'
+export * from './sections'
