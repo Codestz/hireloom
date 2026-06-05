@@ -218,19 +218,6 @@ export function useBlockDoc(initial: BlockDoc) {
     }))
   }, [])
 
-  const onToggleBreak = useCallback(
-    (id: string) => {
-      setDoc((d) => ({
-        ...d,
-        sections: d.sections.map((s) =>
-          s.id === id ? { ...s, pageBreakBefore: !s.pageBreakBefore } : s,
-        ),
-      }))
-      bump()
-    },
-    [bump],
-  )
-
   const onApplyVariants = useCallback(
     (variants: Record<string, string>) => {
       setDoc((d) => ({
@@ -330,7 +317,6 @@ export function useBlockDoc(initial: BlockDoc) {
       onReorderSections,
       onSetVariant,
       onSetColumn,
-      onToggleBreak,
       onRenameSection,
       onApplyVariants,
       onImproveItem,
@@ -349,7 +335,6 @@ export function useBlockDoc(initial: BlockDoc) {
       onReorderSections,
       onSetVariant,
       onSetColumn,
-      onToggleBreak,
       onRenameSection,
       onApplyVariants,
       onImproveItem,

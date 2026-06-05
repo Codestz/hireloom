@@ -225,13 +225,11 @@ export function resumeToDoc(resume: Resume): BlockDoc {
 
   const variants = hl?.sectionVariants ?? {}
   const columns = hl?.sectionColumns ?? {}
-  const breaks = new Set(hl?.sectionBreaks ?? [])
   const headings = hl?.sectionHeadings ?? {}
   for (const s of sections) {
     if (variants[s.type]) s.variant = variants[s.type]
     const col = columns[s.type]
     if (col === 'side' || col === 'main') s.column = col
-    if (breaks.has(s.type)) s.pageBreakBefore = true
     if (headings[s.type]) s.heading = headings[s.type]
   }
   const order = hl?.sectionOrder
@@ -326,12 +324,10 @@ export function docToResume(doc: BlockDoc, base?: Resume): Resume {
 
   const sectionVariants: Record<string, string> = {}
   const sectionColumns: Record<string, string> = {}
-  const sectionBreaks: Array<string> = []
   const sectionHeadings: Record<string, string> = {}
   for (const s of doc.sections) {
     if (s.variant) sectionVariants[s.type] = s.variant
     if (s.column) sectionColumns[s.type] = s.column
-    if (s.pageBreakBefore) sectionBreaks.push(s.type)
     if (s.heading) sectionHeadings[s.type] = s.heading
   }
   const customLines = strArray(items(doc, 'custom')[0]?.lines)
@@ -365,7 +361,6 @@ export function docToResume(doc: BlockDoc, base?: Resume): Resume {
         sectionOrder: doc.sections.map((s) => s.type),
         sectionVariants,
         sectionColumns,
-        sectionBreaks,
         sectionHeadings,
         ...(customLines.length ? { customLines } : {}),
       },

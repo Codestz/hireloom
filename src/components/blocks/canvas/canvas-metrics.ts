@@ -1,9 +1,5 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import type { RefObject } from 'react'
-import type { LayoutKind } from '#/lib/templates'
-import { computePageBreaks } from '#/components/blocks/canvas/page-breaks'
-
-const PAGE_CONTENT_OVERFLOW = 746 // page height minus vertical margins (pt)
 
 /** Client-only gate: false during SSR/first paint, true after mount. */
 export function useMounted(): boolean {
@@ -29,46 +25,4 @@ export function useFitToWidth(
     return () => ro.disconnect()
   }, [ref, pageWidth])
   return fit
-}
-
-export interface PageBreakGuides {
-  /** Y offsets (px) where a page break falls — single/band layouts only. */
-  breaks: Array<number>
-  /** Two-column layout spilled past one page (the side rail can't repeat). */
-  sidebarOverflow: boolean
-}
-
-/**
- * Content-aware page-break guides: measures real block heights and places a line before
- * any block that would overflow the page. A ResizeObserver catches contentEditable height
- * changes (which don't bump `rev`). For the two-column layout the single-axis guide doesn't
- * apply, so it only flags overflow.
- */
-export function usePageBreakGuides(
-  ref: RefObject<HTMLElement | null>,
-  layout: LayoutKind | undefined,
-  enabled: boolean,
-): PageBreakGuides {
-  const [breaks, setBreaks] = useState<Array<number>>([])
-  const [sidebarOverflow, setSidebarOverflow] = useState(false)
-
-  useLayoutEffect(() => {
-    const el = ref.current
-    if (!el || !enabled) return
-    const measure = () => {
-      if (layout === 'sidebar') {
-        setBreaks([])
-        setSidebarOverflow(el.offsetHeight - 96 > PAGE_CONTENT_OVERFLOW)
-      } else {
-        setBreaks(computePageBreaks(el).tops)
-        setSidebarOverflow(false)
-      }
-    }
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [ref, layout, enabled])
-
-  return { breaks, sidebarOverflow }
 }

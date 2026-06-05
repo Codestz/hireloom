@@ -19,8 +19,6 @@ export interface DocSection {
   variant?: string
   /** Column in the two-column layout (defaults via defaultColumn(type)). */
   column?: 'side' | 'main'
-  /** Force this section to start on a new page (single/band layouts). */
-  pageBreakBefore?: boolean
   /** Custom heading override (rename); falls back to the section type's heading. */
   heading?: string
   items: Array<DocItem>

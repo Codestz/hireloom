@@ -29,8 +29,8 @@ export function frame(t: ResolvedTokens): CSSProperties {
     fontFamily: t.fontBodyCss,
     fontSize: t.baseFontSize,
     color: BODY,
-    // Match the PDF's defaultStyle line-height so the canvas measures the same density
-    // the PDF renders — otherwise page-break counts drift (canvas over-counts).
+    // Match the PDF's defaultStyle line-height so the canvas preview reads at the
+    // same density the exported PDF renders.
     lineHeight: 1.3,
   }
 }

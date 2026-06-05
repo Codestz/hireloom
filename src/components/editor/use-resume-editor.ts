@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { computePageBreaks, useBlockDoc  } from '#/components/blocks'
+import { useBlockDoc } from '#/components/blocks'
 import { downloadResumePdf } from '#/lib/export/pdf'
 import { SECTIONS } from '#/lib/blocks/sections'
 import {
@@ -91,16 +91,7 @@ export function useResumeEditor(record: ResumeRecord) {
 
   function exportPdf() {
     const id = toast.loading('Generating PDF…')
-    // Break the PDF at the same blocks the canvas guide shows (preview == file).
-    const sheet = document.querySelector('.atelier-sheet')
-    const autoBreaks =
-      sheet instanceof HTMLElement && layout !== 'sidebar'
-        ? computePageBreaks(sheet).ids
-        : []
-    downloadResumePdf(doc, resolved, `${slugify(record.title)}.pdf`, {
-      layout,
-      autoBreaks,
-    })
+    downloadResumePdf(doc, resolved, `${slugify(record.title)}.pdf`, { layout })
       .then(() => toast.success('Downloaded PDF', { id }))
       .catch((e: unknown) => {
         console.error('[pdf-export]', e)

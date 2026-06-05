@@ -545,13 +545,10 @@ function sectionContent(
   t: ResolvedTokens,
   headingFont: PdfFamily,
   ruleWidth: number,
-  breakBefore = false,
-  autoBreaks: Set<string> = new Set(),
 ): Array<Content> {
   const st = getSection(section.type)
   if (!st) return []
   const fs = t.baseFontSize
-  const headingBreak = breakBefore || autoBreaks.has(`sec-${section.id}`)
   const out: Array<Content> = [
     {
       text: (section.heading ?? st.heading).toUpperCase(),
@@ -561,7 +558,6 @@ function sectionContent(
       bold: true,
       characterSpacing: 1,
       margin: [0, t.space(16), 0, 2],
-      ...(headingBreak ? { pageBreak: 'before' as const } : {}),
     },
     {
       canvas: [
@@ -592,9 +588,6 @@ function sectionContent(
         out.push({
           ...(node as object),
           margin: [0, i ? t.space(6) : 0, 0, 0],
-          ...(autoBreaks.has(`item-${item.id}`)
-            ? { pageBreak: 'before' as const }
-            : {}),
         } as Content)
     })
   }
@@ -603,8 +596,6 @@ function sectionContent(
 
 interface LayoutOpts {
   layout?: LayoutKind
-  /** Element ids (`sec-…`/`item-…`) to force a page break before (from the canvas). */
-  autoBreaks?: Array<string>
 }
 
 function buildDoc(
@@ -616,7 +607,6 @@ function buildDoc(
   const bodyFont = familyOf(t.fontBodyPdf)
   const headingFont = familyOf(t.fontHeadingPdf)
   const layout = opts.layout ?? 'single'
-  const autoBreaks = new Set(opts.autoBreaks ?? [])
   const isSide = (s: DocSection) =>
     (s.column ?? defaultColumn(s.type)) === 'side'
 
@@ -647,15 +637,8 @@ function buildDoc(
         : headerContent(doc.header, t, headingFont)
     content = [
       ...head,
-      ...doc.sections.flatMap((s, i) =>
-        sectionContent(
-          s,
-          t,
-          headingFont,
-          PAGE_CONTENT_WIDTH,
-          i > 0 && !!s.pageBreakBefore,
-          autoBreaks,
-        ),
+      ...doc.sections.flatMap((s) =>
+        sectionContent(s, t, headingFont, PAGE_CONTENT_WIDTH),
       ),
     ]
   }

@@ -12,7 +12,7 @@ JSON Resume (Zod schema)  ⟷  BlockDoc (editor model)  ⟶  PDF / canvas
 
 - **`src/lib/resume`** — the canonical model: the [JSON Resume](https://jsonresume.org/) schema as Zod (`schema.ts`), the single source of truth. Lenient by design so a partial import never blocks editing. Parsing/validation at the import/export boundary (`validate.ts`).
 - **`src/lib/blocks`** — the editor's content model. A **declarative block registry**: each section type is a `defineBlock(...)` (fields, variants, AI prompt, ATS projection) in `defs/`. The editor renders any registered block generically — adding a section type touches no UI.
-- **`src/lib/blocks/json-resume.ts`** — the bridge: `resumeToDoc` / `docToResume`. HireLoom-specific editor state (section order, variants, columns, page breaks, custom headings) is round-tripped through `meta.hireloom`, so exports stay valid JSON Resume.
+- **`src/lib/blocks/json-resume.ts`** — the bridge: `resumeToDoc` / `docToResume`. HireLoom-specific editor state (section order, variants, columns, custom headings) is round-tripped through `meta.hireloom`, so exports stay valid JSON Resume.
 - **`src/lib/db`** — Dexie/IndexedDB. CRUD in `resumes.ts`, TanStack Query hooks in `queries.ts`. Includes backup/restore (export/import all resumes as JSON).
 - **`src/lib/templates`** — layouts (`single` / `sidebar` / `band`), design tokens, and presets.
 
@@ -30,8 +30,8 @@ Everything AI flows through this seam — there is no second AI path.
 
 ## Rendering
 
-- **Canvas** (`src/components/blocks`) — the live, inline-editable document. Page-break guides are measured from real DOM block heights so the preview matches the PDF.
-- **PDF** (`src/components/blocks/pdf-export.ts`) — a custom [pdfmake](http://pdfmake.org/) renderer with vendored, subset, embedded fonts. Selectable, ATS-safe text — not a screenshot.
+- **Canvas** (`src/components/blocks`) — the live, inline-editable document: drag-to-reorder, design variants per section, zoom.
+- **PDF** (`src/lib/export/pdf.ts`) — a custom [pdfmake](http://pdfmake.org/) renderer with vendored, subset, embedded fonts. Selectable, ATS-safe text — not a screenshot. pdfmake paginates naturally.
 - **Import** (`src/lib/import`) — pdf.js text extraction; LinkedIn's two-column layout has a dedicated parser, and any other PDF is structured by the AI engine.
 
 ## Conventions

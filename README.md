@@ -28,13 +28,13 @@ So I built HireLoom: the resume tool I actually wanted. The kind that runs entir
 
 **🎯 ATS-smart, for real.** A deterministic, on-device keyword match scores your CV against any job post and shows exactly what's missing — then one click tailors your summary and projects the score lift. The PDF export is a true text layout (not a screenshot): selectable, parse-safe, the same recipe behind a resume that's gone years with zero ATS rejections.
 
-**✍️ A genuinely nice editor.** A block-based canvas with inline editing, drag-to-reorder, live page-break guides that match the exported PDF, and real templates — single column, two-column (you choose the split), header band.
+**✍️ A genuinely nice editor.** A block-based canvas with inline editing, drag-to-reorder, live preview, and real templates — single column, two-column (you choose the split), header band.
 
 ## Features at a glance
 
 | | |
 |---|---|
-| **Editor** | Block canvas, inline editing, reorder, live preview, page-break guides |
+| **Editor** | Block canvas, inline editing, reorder, live preview, zoom |
 | **Templates** | Single / two-column / header-band layouts · fonts · density · accent color |
 | **AI (on-device or your key)** | Inline ✨ improve/shorten/expand/grammar · summary · skills · cover letter · CV chat · tailor-to-JD |
 | **ATS** | Deterministic keyword match + gap analysis + score-lift tailoring |

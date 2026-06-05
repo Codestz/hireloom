@@ -9,7 +9,6 @@ import { BlockDocument } from '#/components/blocks/document/block-document'
 import {
   useFitToWidth,
   useMounted,
-  usePageBreakGuides,
 } from '#/components/blocks/canvas/canvas-metrics'
 import type { useBlockDoc } from '#/components/blocks/state/use-block-doc'
 
@@ -38,12 +37,6 @@ export function BlockCanvas({
 
   const mounted = useMounted()
   const fit = useFitToWidth(panelRef, PAGE_W)
-  const { breaks, sidebarOverflow } = usePageBreakGuides(
-    sheetRef,
-    layout,
-    mounted,
-  )
-  const pageCount = breaks.length + 1
   const zoom = fit * userZoom
 
   return (
@@ -58,41 +51,6 @@ export function BlockCanvas({
             style={{ '--chrome-zoom': 1 / zoom } as CSSProperties}
             className="atelier-sheet relative h-fit w-[595px] rounded-[2px] bg-white p-12 text-neutral-900 print:w-full print:rounded-none print:p-[16mm]"
           >
-            {breaks.length ? (
-              <div
-                className="pointer-events-none absolute inset-0 z-10 print:hidden"
-                aria-hidden
-              >
-                {breaks.map((top, i) => (
-                  <div
-                    key={i}
-                    className="absolute right-0 left-0"
-                    style={{ top }}
-                  >
-                    <div style={{ borderTop: '1.5px dashed #e0820f' }} />
-                    <span
-                      style={{
-                        position: 'absolute',
-                        right: 6,
-                        top: 0,
-                        transform: 'translateY(-50%)',
-                        backgroundColor: '#d97706',
-                        color: '#fff',
-                        fontSize: 9,
-                        fontWeight: 700,
-                        letterSpacing: 0.3,
-                        padding: '1px 7px',
-                        borderRadius: 9999,
-                        whiteSpace: 'nowrap',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                      }}
-                    >
-                      Page {i + 2}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
             {mounted ? (
               <AiEnabledContext.Provider value={aiEnabled}>
                 <BlockDocProvider value={controller.actions}>
@@ -111,19 +69,6 @@ export function BlockCanvas({
       </div>
 
       <div className="sticky bottom-4 left-1/2 flex w-fit -translate-x-1/2 items-center gap-0.5 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur print:hidden">
-        {sidebarOverflow ? (
-          <span
-            className="px-2 text-xs font-medium text-amber-600"
-            title="Two-column can't repeat the side rail across pages — trim to one page or switch layout."
-          >
-            ⚠ Over 1 page
-          </span>
-        ) : (
-          <span className="px-2 text-xs tabular-nums text-muted-foreground">
-            {pageCount} {pageCount === 1 ? 'page' : 'pages'}
-          </span>
-        )}
-        <div className="mx-0.5 h-5 w-px bg-border" />
         <button
           type="button"
           aria-label="Zoom out"

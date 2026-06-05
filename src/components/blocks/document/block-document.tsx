@@ -8,12 +8,7 @@ import {
 } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import {
-  ArrowLeftRightIcon,
-  SeparatorHorizontalIcon,
-  SparklesIcon,
-  Trash2Icon,
-} from 'lucide-react'
+import { ArrowLeftRightIcon, SparklesIcon, Trash2Icon } from 'lucide-react'
 import { Fragment, useContext } from 'react'
 import type { CSSProperties } from 'react'
 import { headerBlock } from '#/lib/blocks/defs/header'
@@ -58,8 +53,6 @@ function SectionHeading({
   tokens,
   column,
   onSetColumn,
-  breakBefore,
-  onToggleBreak,
   onRename,
   onSetVariant,
   onDelete,
@@ -72,9 +65,6 @@ function SectionHeading({
   /** When set, show the Left/Right column toggle (two-column layout only). */
   column?: 'side' | 'main'
   onSetColumn?: (column: 'side' | 'main') => void
-  /** When set, show the page-break-before toggle (single/band layouts). */
-  breakBefore?: boolean
-  onToggleBreak?: () => void
   onRename: (heading: string) => void
   onSetVariant: (variantId: string) => void
   onDelete: () => void
@@ -108,24 +98,6 @@ function SectionHeading({
             <ArrowLeftRightIcon className="size-3.5" />
           </button>
         ) : null}
-        {onToggleBreak ? (
-          <button
-            type="button"
-            aria-label="Page break before"
-            title={
-              breakBefore
-                ? 'Remove page break'
-                : 'Start this section on a new page'
-            }
-            onClick={onToggleBreak}
-            className={cn(
-              'flex size-5 items-center justify-center rounded outline-none transition-colors hover:bg-neutral-800 hover:text-white',
-              breakBefore ? 'text-amber-500' : 'text-neutral-400',
-            )}
-          >
-            <SeparatorHorizontalIcon className="size-3.5" />
-          </button>
-        ) : null}
         <DesignPicker
           type={type}
           variantId={variantId}
@@ -143,36 +115,6 @@ function SectionHeading({
           <Trash2Icon className="size-3.5" />
         </button>
       </span>
-    </div>
-  )
-}
-
-/** Visual marker for a manual page break — the PDF enforces the actual break. */
-function PageBreakMark({ tokens }: { tokens: ResolvedTokens }) {
-  return (
-    <div
-      contentEditable={false}
-      aria-hidden
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        margin: `${tokens.space(10)}px 0 ${tokens.space(1)}px`,
-        color: '#b45309',
-      }}
-    >
-      <div style={{ flex: 1, borderTop: '1px dashed #d97706', opacity: 0.6 }} />
-      <span
-        style={{
-          fontSize: 9,
-          fontWeight: 600,
-          letterSpacing: 0.5,
-          textTransform: 'uppercase',
-        }}
-      >
-        Page break
-      </span>
-      <div style={{ flex: 1, borderTop: '1px dashed #d97706', opacity: 0.6 }} />
     </div>
   )
 }
@@ -229,7 +171,6 @@ export function BlockDocument({
     onRemoveSection,
     onSetVariant,
     onSetColumn,
-    onToggleBreak,
     onRenameSection,
     onImproveItem,
   } = useBlockDocController()
@@ -248,17 +189,10 @@ export function BlockDocument({
       st.variants[0].Layout
     const sampleData =
       section.items.at(0)?.data ?? (st.def.default() as Record<string, unknown>)
-    const canBreak = layout !== 'sidebar'
     return (
       <>
-        {canBreak && section.pageBreakBefore ? (
-          <PageBreakMark tokens={tokens} />
-        ) : null}
         <section
           id={`sec-${section.id}`}
-          data-page-break={
-            canBreak && section.pageBreakBefore ? 'true' : undefined
-          }
           style={{ marginTop: tokens.space(16), scrollMarginTop: 24 }}
         >
           <SectionHeading
@@ -276,10 +210,6 @@ export function BlockDocument({
               layout === 'sidebar'
                 ? (c) => onSetColumn(section.id, c)
                 : undefined
-            }
-            breakBefore={canBreak ? !!section.pageBreakBefore : undefined}
-            onToggleBreak={
-              canBreak ? () => onToggleBreak(section.id) : undefined
             }
             onRename={(h) => onRenameSection(section.id, h)}
             onSetVariant={(v) => onSetVariant(section.id, v)}

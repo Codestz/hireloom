@@ -149,7 +149,6 @@ export const MetaSchema = z.object({
       sectionOrder: z.array(z.string()).optional(),
       sectionVariants: z.record(z.string(), z.string()).optional(),
       sectionColumns: z.record(z.string(), z.string()).optional(),
-      sectionBreaks: z.array(z.string()).optional(),
       sectionHeadings: z.record(z.string(), z.string()).optional(),
       customLines: z.array(z.string()).optional(),
     })
