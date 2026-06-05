@@ -5,15 +5,15 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { nitro } from 'nitro/vite'
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
     devtools(),
-    nitro({ rollupConfig: { external: [/^@sentry\//] } }),
     tailwindcss(),
-    tanstackStart(),
+    // HireLoom is fully client-side (IndexedDB, contentEditable, on-device AI), so we ship
+    // a static SPA — no SSR server function (and no Vercel routing loop to it).
+    tanstackStart({ spa: { enabled: true } }),
     viteReact(),
   ],
 })
