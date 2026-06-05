@@ -1,5 +1,5 @@
 /**
- * AI service — the single entry point for every résumé AI feature. It is engine-agnostic:
+ * AI service — the single entry point for every resume AI feature. It is engine-agnostic:
  * each call routes through src/lib/ai/engine.ts, which runs it on Chrome's built-in
  * on-device model (default, private) or the user's own Gemini key (opt-in cloud). Callers
  * here don't know which engine ran.
@@ -52,7 +52,7 @@ const INSTRUCTIONS: Record<TextAction, string> = {
 }
 
 const SHARED =
-  'You are editing one line of a professional résumé (a bullet point or summary sentence). Keep it truthful, ATS-friendly, and in implied first person (no "I"/"my"). Respond with ONLY the rewritten text — no preamble, quotes, labels, or markdown.'
+  'You are editing one line of a professional resume (a bullet point or summary sentence). Keep it truthful, ATS-friendly, and in implied first person (no "I"/"my"). Respond with ONLY the rewritten text — no preamble, quotes, labels, or markdown.'
 
 const clean = (s: string) => s.replace(/^["'“”]+|["'“”]+$/g, '').trim()
 
@@ -105,32 +105,32 @@ export function generateSummary(
   onChunk: (partial: string) => void,
 ): Promise<string> {
   return streamPrompt(
-    `Write a concise, compelling professional résumé summary — 2 to 3 sentences, about 50 words, implied first person (no "I"/"my"). Use ONLY the experience below; do not invent anything. Respond with ONLY the summary text.\n\nExperience:\n${experience.slice(0, 3000)}`,
+    `Write a concise, compelling professional resume summary — 2 to 3 sentences, about 50 words, implied first person (no "I"/"my"). Use ONLY the experience below; do not invent anything. Respond with ONLY the summary text.\n\nExperience:\n${experience.slice(0, 3000)}`,
     onChunk,
   )
 }
 
-/** Draft a focused cover letter from the résumé + a job description (streams). */
+/** Draft a focused cover letter from the resume + a job description (streams). */
 export function generateCoverLetter(
   resume: string,
   jd: string,
   onChunk: (partial: string) => void,
 ): Promise<string> {
   return streamPrompt(
-    `Write a focused, professional cover letter (3 short paragraphs) for the job below, drawing only on the candidate's real résumé. Be specific and confident; never fabricate experience or use clichés. Respond with ONLY the letter body — no addresses, date, or "Dear Hiring Manager" header.\n\nJob description:\n${jd.slice(0, 1500)}\n\nRésumé:\n${resume.slice(0, 2500)}`,
+    `Write a focused, professional cover letter (3 short paragraphs) for the job below, drawing only on the candidate's real resume. Be specific and confident; never fabricate experience or use clichés. Respond with ONLY the letter body — no addresses, date, or "Dear Hiring Manager" header.\n\nJob description:\n${jd.slice(0, 1500)}\n\nResume:\n${resume.slice(0, 2500)}`,
     onChunk,
   )
 }
 
 /**
- * Structure raw résumé text (from any PDF) into a JSON Resume object via the AI engine.
+ * Structure raw resume text (from any PDF) into a JSON Resume object via the AI engine.
  * Streams so the importer can show live progress; `onProgress` gets the running char count.
  */
 export async function structureResumeJson(
   text: string,
   onProgress?: (chars: number) => void,
 ): Promise<Record<string, unknown> | null> {
-  const prompt = `Convert the résumé text below into JSON Resume format. Respond with ONLY a JSON object, no commentary:
+  const prompt = `Convert the resume text below into JSON Resume format. Respond with ONLY a JSON object, no commentary:
 {"basics":{"name":"","label":"job title","email":"","phone":"","url":"","summary":"","location":{"city":""}},"work":[{"name":"company","position":"title","startDate":"","endDate":"","highlights":["bullet","bullet"]}],"education":[{"institution":"","studyType":"degree","area":"field","startDate":"","endDate":""}],"skills":[{"name":""}]}
 Rules: use ONLY information present in the text; omit any field you cannot fill. Put each achievement/bullet as its own highlight string. Keep dates as written.
 
@@ -151,7 +151,7 @@ export function tailorSummary(
   onChunk: (partial: string) => void,
 ): Promise<string> {
   return streamPrompt(
-    `Rewrite the candidate's professional résumé summary to target the job below. Naturally adopt the job's key terminology WHERE the candidate's real experience already supports it — never claim a skill or experience not present in the résumé. 2-3 sentences, implied first person (no "I"/"my"). Respond with ONLY the summary text.\n\nJOB DESCRIPTION:\n${jd.slice(0, 1500)}\n\nRÉSUMÉ:\n${resume.slice(0, 2500)}`,
+    `Rewrite the candidate's professional resume summary to target the job below. Naturally adopt the job's key terminology WHERE the candidate's real experience already supports it — never claim a skill or experience not present in the resume. 2-3 sentences, implied first person (no "I"/"my"). Respond with ONLY the summary text.\n\nJOB DESCRIPTION:\n${jd.slice(0, 1500)}\n\nRÉSUMÉ:\n${resume.slice(0, 2500)}`,
     onChunk,
   )
 }
@@ -166,7 +166,7 @@ export interface ChatAction {
 }
 
 /**
- * The CV chat brain: given the résumé context + a user request, return a structured
+ * The CV chat brain: given the resume context + a user request, return a structured
  * edit action (or a plain answer). The caller previews/applies it — the model never
  * mutates the document directly. Stateless per turn so it always sees the current CV.
  */
@@ -174,7 +174,7 @@ export async function chatEdit(
   context: string,
   message: string,
 ): Promise<ChatAction> {
-  const prompt = `You are a résumé editing assistant. Read the résumé and the user's request, then reply with ONE JSON object and nothing else:
+  const prompt = `You are a resume editing assistant. Read the resume and the user's request, then reply with ONE JSON object and nothing else:
 {"kind":"rewrite_summary|add_skills|rewrite_entry|answer","target":"company or role name (only for rewrite_entry)","content":"new content","reply":"a short friendly message to the user"}
 
 Content rules by kind:
@@ -183,7 +183,7 @@ Content rules by kind:
 - rewrite_entry: target = the company name exactly as written; content = the rewritten bullet points, one per line.
 - answer: content = "" (use for questions, advice, or unclear requests).
 
-Be truthful — use only what's in the résumé; never invent employers, dates, or facts. Only change what the user asked for.
+Be truthful — use only what's in the resume; never invent employers, dates, or facts. Only change what the user asked for.
 
 RÉSUMÉ:
 ${context.slice(0, 4000)}
@@ -223,7 +223,7 @@ export async function suggestSkills(
   // Dedupe against skills already named *inside* grouped lines, not whole lines.
   const have = new Set(skillTokens(existing).map((s) => s.toLowerCase()))
   const out = await promptOnce(
-    `From the résumé experience below, extract the concrete technical skills, tools, languages, and frameworks that are actually mentioned. Respond as a single comma-separated list — no categories, no duplicates, no commentary.\n\nExperience:\n${experience.slice(0, 3000)}`,
+    `From the resume experience below, extract the concrete technical skills, tools, languages, and frameworks that are actually mentioned. Respond as a single comma-separated list — no categories, no duplicates, no commentary.\n\nExperience:\n${experience.slice(0, 3000)}`,
   )
   const seen = new Set<string>()
   return out
@@ -258,7 +258,7 @@ export async function mergeSkills(
   if (!grouped) return [...existing, ...adds]
 
   const out = await promptOnce(
-    `These are résumé skill groups, one per line in the format "Group: item, item, item":\n${existing.join('\n')}\n\nAdd each of these skills to the single most relevant existing group: ${adds.join(', ')}.\nRules: keep the exact same groups and "Group: items" format, do NOT create new groups, do NOT duplicate, append the new skills to the end of the matching group's list. Respond with ONLY the updated groups, one per line.`,
+    `These are resume skill groups, one per line in the format "Group: item, item, item":\n${existing.join('\n')}\n\nAdd each of these skills to the single most relevant existing group: ${adds.join(', ')}.\nRules: keep the exact same groups and "Group: items" format, do NOT create new groups, do NOT duplicate, append the new skills to the end of the matching group's list. Respond with ONLY the updated groups, one per line.`,
   )
   const lines = out
     .split('\n')

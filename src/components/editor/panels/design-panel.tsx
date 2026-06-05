@@ -10,7 +10,7 @@ import { cn } from '#/lib/utils.ts'
 
 /**
  * Design panel (E5) — lives in the rail so the editor feels "filled". Live controls
- * for the résumé's tokens: template, accent, font, density. Mutations flow up to the
+ * for the resume's tokens: template, accent, font, density. Mutations flow up to the
  * workspace, which persists to the record and re-renders the canvas.
  */
 

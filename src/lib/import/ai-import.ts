@@ -3,7 +3,7 @@ import { createEmptyResume, safeParseResume } from '#/lib/resume'
 import type { Resume } from '#/lib/resume'
 
 /**
- * AI-assisted import for *any* résumé PDF: the on-device model turns raw extracted text
+ * AI-assisted import for *any* resume PDF: the on-device model turns raw extracted text
  * into a JSON Resume, which we normalize (dates → ISO, coerce shapes) and validate. It's
  * a best-effort head start, not a perfect parse — the user reviews and fixes on the canvas.
  * Falls back to dropping the raw text into the summary so nothing is ever lost.
@@ -89,7 +89,7 @@ function coerce(o: Record<string, unknown>): unknown {
   }
 }
 
-/** Last-resort résumé so an import never loses the user's content. */
+/** Last-resort resume so an import never loses the user's content. */
 function fallback(text: string): Resume {
   const base = createEmptyResume()
   const firstLine = text

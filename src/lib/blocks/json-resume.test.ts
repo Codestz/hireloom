@@ -5,7 +5,7 @@ import { docToResume, resumeToDoc } from './json-resume'
 /**
  * The bridge between JSON Resume (the persisted format) and the BlockDoc (the editor
  * model) is the most fragile, highest-value piece — a lossy round-trip silently corrupts
- * a user's résumé on every autosave. These tests pin the contract: data and design choices
+ * a user's resume on every autosave. These tests pin the contract: data and design choices
  * survive `resume → doc → resume`.
  */
 
@@ -100,7 +100,7 @@ describe('resume ↔ doc round-trip', () => {
     expect(hl?.sectionHeadings?.experience).toBe('Work History')
     expect(hl?.sectionOrder?.[0]).toBe('skills')
 
-    // …and importing that résumé restores the choices.
+    // …and importing that resume restores the choices.
     const restored = resumeToDoc(back)
     const exp2 = restored.sections.find((s) => s.type === 'experience')
     expect(exp2?.variant).toBe('timeline')
@@ -108,7 +108,7 @@ describe('resume ↔ doc round-trip', () => {
     expect(restored.sections[0]?.type).toBe('skills')
   })
 
-  it('round-trips an empty résumé without throwing', () => {
+  it('round-trips an empty resume without throwing', () => {
     const empty: Resume = {}
     expect(() => docToResume(resumeToDoc(empty), empty)).not.toThrow()
   })

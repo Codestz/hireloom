@@ -1,6 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import { Analytics } from '@vercel/analytics/react'
 import { useEffect } from 'react'
 
 import '@fontsource-variable/geist'
@@ -38,7 +39,7 @@ export const Route = createRootRoute({
       {
         name: 'description',
         content:
-          'A private, local-first résumé builder. On-device AI, ATS-safe PDF export, zero uploads — free and open source. Your career data never leaves your machine.',
+          'A private, local-first resume builder. On-device AI, ATS-safe PDF export, zero uploads — free and open source. Your career data never leaves your machine.',
       },
       {
         name: 'theme-color',
@@ -49,7 +50,7 @@ export const Route = createRootRoute({
         ? [{ httpEquiv: 'origin-trial', content: ORIGIN_TRIAL }]
         : []),
       // Social unfurl (LinkedIn/Twitter). Absolute URLs when VITE_SITE_URL is set.
-      { property: 'og:title', content: 'HireLoom — a résumé you actually own' },
+      { property: 'og:title', content: 'HireLoom — a resume you actually own' },
       {
         property: 'og:description',
         content:
@@ -108,6 +109,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           ]}
         />
         <Scripts />
+        {/* Anonymous, cookie-less page-view analytics (no PII, never resume content). */}
+        <Analytics />
       </body>
     </html>
   )

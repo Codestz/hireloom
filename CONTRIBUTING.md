@@ -4,8 +4,8 @@ Thanks for your interest! HireLoom is a privacy-first, local-first CV builder, a
 
 ## Ground rules
 
-- **Privacy is the product.** No telemetry, no network calls with user data, no backend. The only egress is the opt-in, bring-your-own-key cloud AI provider — and that goes browser→provider directly, never through a server we control. PRs that break this won't be merged.
-- **Everything runs client-side.** Résumé data lives in IndexedDB. Treat the user's data as never leaving their device by default.
+- **Privacy is the product.** No backend, and no network call ever carries the user's resume content. The only egress is (1) the opt-in, bring-your-own-key cloud AI provider — browser→provider directly, never through a server we control — and (2) anonymous, cookie-less page-view analytics (Vercel; no PII). PRs that send user content anywhere won't be merged.
+- **Everything runs client-side.** Resume data lives in IndexedDB. Treat the user's data as never leaving their device by default.
 
 ## Getting started
 
@@ -30,7 +30,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md). In short:
 
 - `src/lib/resume` — the JSON Resume schema (Zod) and helpers. The canonical data model.
 - `src/lib/blocks` — the declarative block/section registry (the editor's content model).
-- `src/lib/ai` — the pluggable AI engine + providers + résumé-specific prompts.
+- `src/lib/ai` — the pluggable AI engine + providers + resume-specific prompts.
 - `src/lib/templates` — layouts, tokens, presets.
 - `src/components/blocks` — the live editing canvas.
 - `src/components/editor` — the editor workspace, sidebar panels, dialogs.
@@ -43,7 +43,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md). In short:
 
 ## Style
 
-- TypeScript, no `any` where avoidable; the Zod schema is the source of truth for résumé types.
+- TypeScript, no `any` where avoidable; the Zod schema is the source of truth for resume types.
 - Keep comments about the *why*, not the *what*.
 - Match the surrounding code's conventions.
 

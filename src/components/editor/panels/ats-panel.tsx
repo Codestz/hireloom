@@ -68,12 +68,12 @@ export function AtsPanel({ controller }: { controller: Controller }) {
         .map((m) => m.term)
         .slice(0, 12)
         .join(', ')
-      const prompt = `I'm tailoring my résumé to a job posting. These keywords from the job description are missing from my résumé: ${missing}.
+      const prompt = `I'm tailoring my resume to a job posting. These keywords from the job description are missing from my resume: ${missing}.
 
-My résumé:
+My resume:
 ${text.slice(0, 2000)}
 
-For each missing keyword, give ONE short line: either note I likely already cover it with a synonym (name the synonym), or suggest a concise résumé phrase I could add. Be specific and honest — never invent experience I don't show.`
+For each missing keyword, give ONE short line: either note I likely already cover it with a synonym (name the synonym), or suggest a concise resume phrase I could add. Be specific and honest — never invent experience I don't show.`
       setAiText(await enginePrompt(prompt))
     } catch {
       toast.error('The AI request failed — check AI settings.')

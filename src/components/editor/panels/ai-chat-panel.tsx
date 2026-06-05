@@ -10,7 +10,7 @@ import { chatContext } from '#/lib/blocks/doc-text'
 import { cn } from '#/lib/utils.ts'
 
 /**
- * The CV Chat — talk to your résumé. The model reads a compact context and returns a
+ * The CV Chat — talk to your resume. The model reads a compact context and returns a
  * STRUCTURED edit (rewrite summary / rewrite a role's bullets / add skills) or a plain
  * answer. Edits are shown as a preview you Apply or Discard — the model never mutates
  * the document directly. The conversation persists across sidebar tabs for the session.
@@ -26,7 +26,7 @@ interface Message {
 }
 
 // Persist the conversation for the browser session (survives sidebar-tab switches;
-// cleared when the tab closes). One editor edits one résumé, so a single key is fine.
+// cleared when the tab closes). One editor edits one resume, so a single key is fine.
 const CHAT_KEY = 'hireloom.chat'
 
 function loadMessages(): Array<Message> {
@@ -42,7 +42,7 @@ function loadMessages(): Array<Message> {
 const SUGGESTIONS = [
   'Make my summary more senior',
   'Tighten my most recent role’s bullets',
-  'What’s weak about my résumé?',
+  'What’s weak about my resume?',
 ]
 
 const EDIT_LABEL: Record<string, string> = {
@@ -130,7 +130,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
     setMessages((m) =>
       m.map((msg, i) => (i === index ? { ...msg, applied: true } : msg)),
     )
-    toast.success('Applied to your résumé')
+    toast.success('Applied to your resume')
   }
 
   async function applyAction(action: ChatAction): Promise<boolean> {
@@ -191,7 +191,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
           <div className="flex flex-col gap-3 pt-2">
             <div className="flex items-center gap-2 text-sm font-medium">
               <SparklesIcon className="size-4 text-primary" />
-              Talk to your résumé
+              Talk to your resume
             </div>
             <p className="text-xs text-muted-foreground">
               Ask for edits or advice — every change is previewed before it

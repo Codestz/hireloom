@@ -56,7 +56,7 @@ export function AiSettingsDialog({
             active={cfg.engine === 'gemini'}
             icon={CloudIcon}
             title="Gemini API (your key)"
-            body="Works in any browser, fast. Sends your résumé text to Google."
+            body="Works in any browser, fast. Sends your resume text to Google."
             onClick={() => update({ engine: 'gemini' })}
           />
 
@@ -84,7 +84,7 @@ export function AiSettingsDialog({
               </a>
               <p className="flex items-start gap-1.5 text-[11px] text-amber-700">
                 <TriangleAlertIcon className="mt-px size-3.5 shrink-0" />
-                Cloud AI sends your résumé text to Google’s Gemini API — it
+                Cloud AI sends your resume text to Google’s Gemini API — it
                 leaves your device. Your key is stored only in this browser.
               </p>
             </div>

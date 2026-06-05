@@ -149,7 +149,7 @@
     @apply bg-background font-sans text-foreground antialiased;
   }
 
-  /* Editable canvas: placeholder for empty inline fields + tight résumé spacing. */
+  /* Editable canvas: placeholder for empty inline fields + tight resume spacing. */
   [contenteditable][data-placeholder]:empty::before {
     content: attr(data-placeholder);
     color: #9ca3af;
@@ -234,7 +234,7 @@
   background-color: rgba(47, 107, 79, 0.045);
 }
 
-/* ── Print / Save-as-PDF — isolate the résumé sheet, strip all editor chrome ─────
+/* ── Print / Save-as-PDF — isolate the resume sheet, strip all editor chrome ─────
    Prints the actual rendered document (true visual parity), fully on-device. */
 @media print {
   /* margin:0 suppresses the browser's own date/title/URL header & footer; the page

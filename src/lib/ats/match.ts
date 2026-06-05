@@ -2,11 +2,11 @@
  * Deterministic ATS keyword match — fully on-device, no AI, works in every browser.
  * It extracts the meaningful terms (single words + 2–3 word phrases) from the job
  * description the user pastes — NOT a hardcoded list — ranks them by frequency, then
- * checks which appear in the résumé's plain text. Optional on-device AI (Chrome) can
+ * checks which appear in the resume's plain text. Optional on-device AI (Chrome) can
  * layer synonym/suggestion help on top, but the score here is real and reproducible.
  */
 
-// Function words + résumé/JD boilerplate that carry no matching signal.
+// Function words + resume/JD boilerplate that carry no matching signal.
 const STOPWORDS = new Set([
   'a',
   'an',
@@ -179,7 +179,7 @@ export interface Keyword {
 /**
  * Pull ranked keywords from the JD: content unigrams (the reliable ATS signal) plus
  * *repeated* clean 2-word phrases. One-off bigrams and stopword-spanning n-grams are
- * noise that rarely match a résumé verbatim, so we skip them.
+ * noise that rarely match a resume verbatim, so we skip them.
  */
 function extractKeywords(jd: string, limit = 24): Array<Keyword> {
   const tokens = tokenize(jd)

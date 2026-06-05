@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { cn } from '#/lib/utils.ts'
 
 /**
- * A Block — one card of the résumé, with a hover toolbar pinned above it. Compound by
+ * A Block — one card of the resume, with a hover toolbar pinned above it. Compound by
  * design so consumers compose exactly the controls they need (and new ones can be added
  * without touching this file):
  *

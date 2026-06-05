@@ -23,7 +23,7 @@ import { AiSettingsDialog } from '#/components/editor/dialogs/ai-settings-dialog
 /**
  * AI Studio — document-level generators powered by Chrome's on-device model:
  * draft a summary from the work history, mine skills from the bullets, and write a
- * cover letter from the résumé + a job description. Everything streams in live and
+ * cover letter from the resume + a job description. Everything streams in live and
  * stays on the device. Inline per-line actions live on the fields themselves (Phase 1).
  */
 type Controller = ReturnType<typeof useBlockDoc>
@@ -73,7 +73,7 @@ export function AiStudioPanel({ controller }: { controller: Controller }) {
   function applySummary() {
     controller.onHeaderChange('summary', summary)
     controller.bump()
-    toast.success('Summary applied to your résumé')
+    toast.success('Summary applied to your resume')
   }
 
   async function genSkills() {

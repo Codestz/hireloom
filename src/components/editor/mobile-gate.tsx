@@ -17,7 +17,7 @@ export function MobileGate() {
       <div className="flex flex-col gap-2">
         <h1 className="text-lg font-semibold">Best on a bigger screen</h1>
         <p className="max-w-xs text-sm text-muted-foreground">
-          The editor needs room to build and preview your résumé. Open HireLoom
+          The editor needs room to build and preview your resume. Open HireLoom
           on a laptop or desktop to get started — your data stays on your device
           either way.
         </p>

@@ -4,7 +4,7 @@ import type { Resume } from './schema'
 /**
  * Validation at the import/export boundary (task #8). The schema is lenient by design
  * (see schema.ts), so this mostly guards against structurally-wrong JSON rather than
- * "incomplete" résumés — which are expected and fine.
+ * "incomplete" resumes — which are expected and fine.
  */
 
 export type ParseResult =

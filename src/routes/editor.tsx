@@ -15,12 +15,12 @@ function EditorPage() {
   if (isLoading || !record) {
     return (
       <div className="flex h-dvh items-center justify-center text-sm text-muted-foreground">
-        Loading your résumé…
+        Loading your resume…
       </div>
     )
   }
 
-  // Key by id so switching résumés re-seeds the editor form.
+  // Key by id so switching resumes re-seeds the editor form.
   return (
     <EditorWorkspace key={record.id} record={record} autoImport={autoImport} />
   )

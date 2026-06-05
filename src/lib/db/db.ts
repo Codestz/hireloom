@@ -29,7 +29,7 @@ db.version(1).stores({
   resumes: 'id, updatedAt, title',
 })
 
-// v2 — Phase 2: per-résumé template/tokens + backfilled item ids + section order.
+// v2 — Phase 2: per-resume template/tokens + backfilled item ids + section order.
 db.version(2)
   .stores({ resumes: 'id, updatedAt, title' })
   .upgrade(async (tx) => {

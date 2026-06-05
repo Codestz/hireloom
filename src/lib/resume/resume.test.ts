@@ -3,8 +3,8 @@ import { createEmptyResume, createSampleResume } from './default'
 import { ResumeSchema } from './schema'
 import { parseResumeJson, safeParseResume } from './validate'
 
-describe('résumé model', () => {
-  it('empty résumé is schema-valid and round-trips through JSON', () => {
+describe('resume model', () => {
+  it('empty resume is schema-valid and round-trips through JSON', () => {
     const empty = createEmptyResume()
     expect(ResumeSchema.safeParse(empty).success).toBe(true)
 
@@ -12,7 +12,7 @@ describe('résumé model', () => {
     expect(result.ok).toBe(true)
   })
 
-  it('sample résumé is schema-valid', () => {
+  it('sample resume is schema-valid', () => {
     expect(ResumeSchema.safeParse(createSampleResume()).success).toBe(true)
   })
 

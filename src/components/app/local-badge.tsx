@@ -8,7 +8,7 @@ import {
 
 /**
  * The trust signal (VISION pillar 1). Surfaces the core promise everywhere:
- * nothing about the résumé leaves the device.
+ * nothing about the resume leaves the device.
  */
 export function LocalBadge() {
   return (

@@ -3,6 +3,7 @@ import {
   ArrowRightIcon,
   DownloadIcon,
   GaugeIcon,
+  GithubIcon,
   LinkedinIcon,
   ShieldCheckIcon,
   SparklesIcon,
@@ -57,7 +58,7 @@ function Home() {
     const { importBackup } = await import('#/lib/db/resumes')
     try {
       const n = await importBackup(await file.text())
-      toast.success(`Restored ${n} résumé${n === 1 ? '' : 's'}`)
+      toast.success(`Restored ${n} resume${n === 1 ? '' : 's'}`)
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : 'Could not restore that file.',
@@ -66,7 +67,7 @@ function Home() {
   }
 
   async function loadDemo() {
-    // Seed a fully-populated sample résumé (client-only Dexie), then open the editor.
+    // Seed a fully-populated sample resume (client-only Dexie), then open the editor.
     const { createResume } = await import('#/lib/db/resumes')
     await createResume({
       title: 'Sample — Esteban Estrada',
@@ -90,13 +91,15 @@ function Home() {
           Hire<span className="text-primary">loom</span>
         </span>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="icon" asChild>
             <a
-              href="https://www.gnu.org/licenses/agpl-3.0.html"
+              href="https://github.com/Codestz/hireloom"
               target="_blank"
               rel="noreferrer"
+              aria-label="HireLoom on GitHub"
+              title="View source on GitHub"
             >
-              Open source
+              <GithubIcon className="size-4" />
             </a>
           </Button>
           <ThemeToggle />
@@ -111,7 +114,7 @@ function Home() {
           </span>
 
           <h1 className="font-serif text-5xl leading-[1.04] font-medium tracking-tight text-balance sm:text-6xl">
-            Build a résumé
+            Build a resume
             <br />
             you actually <span className="text-primary italic">own.</span>
           </h1>
@@ -125,7 +128,7 @@ function Home() {
         <div className="flex flex-col items-center gap-3 sm:flex-row">
           <Button size="lg" asChild>
             <Link to="/editor">
-              Start a résumé
+              Start a resume
               <ArrowRightIcon data-icon="inline-end" />
             </Link>
           </Button>
@@ -166,7 +169,7 @@ function Home() {
 
       <footer className="mx-auto flex w-full max-w-5xl flex-col items-center gap-3 px-6 pb-16 text-center">
         <p className="text-xs text-muted-foreground">
-          Your résumés live only in this browser. Keep them safe:
+          Your resumes live only in this browser. Keep them safe:
         </p>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => void backup()}>

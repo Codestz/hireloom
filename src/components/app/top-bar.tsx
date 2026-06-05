@@ -58,7 +58,7 @@ export function TopBar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Download résumé</DropdownMenuLabel>
+              <DropdownMenuLabel>Download resume</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem onClick={onExportPdf} disabled={!onExportPdf}>

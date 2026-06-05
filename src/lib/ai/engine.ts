@@ -4,7 +4,7 @@ import { geminiProvider } from './providers/gemini'
 import type { AiConfig, AiProvider, EngineKind, PromptOpts } from './types'
 
 /**
- * AI engine — the single seam the whole résumé suite calls. It selects a provider from
+ * AI engine — the single seam the whole resume suite calls. It selects a provider from
  * config and delegates. To add a backend (e.g. Anthropic): implement AiProvider, add it
  * to PROVIDERS, and extend AiConfig — no caller changes. Local-first stays the default;
  * the promise is "nothing leaves your device unless you turn on a cloud provider."

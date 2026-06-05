@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { matchResume } from './match'
 
 describe('matchResume', () => {
-  it('matches résumé keywords and flags missing ones', () => {
+  it('matches resume keywords and flags missing ones', () => {
     const jd =
       'Build web apps with React, TypeScript and Python. Nice to have AWS and Docker.'
     const resume =

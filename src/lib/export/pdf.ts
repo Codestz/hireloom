@@ -36,7 +36,7 @@ type PdfFamily = 'Roboto' | 'SourceSerif' | 'JetBrainsMono'
  * vfs); Serif → Source Serif 4, Mono → JetBrains Mono — static .ttf subset to Latin and
  * vendored into the vfs (see pdf-fonts.ts), since pdfmake's browser build lacks the
  * standard-14 fonts and our app serif (Fraunces) is variable woff2. So a serif/mono
- * résumé exports in a real serif/mono, matching the canvas.
+ * resume exports in a real serif/mono, matching the canvas.
  */
 function familyOf(pdfFont: string): PdfFamily {
   if (pdfFont.startsWith('Times')) return 'SourceSerif'

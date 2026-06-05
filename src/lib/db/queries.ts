@@ -4,7 +4,7 @@ import type { ThemeTokens } from '#/lib/templates/tokens'
 import type { ResumeRecord } from './db'
 import * as repo from './resumes'
 
-/** Query keys for the résumé store. */
+/** Query keys for the resume store. */
 export const resumeKeys = {
   all: ['resumes'] as const,
   list: () => [...resumeKeys.all, 'list'] as const,
@@ -24,7 +24,7 @@ export function useResume(id: string | undefined) {
   })
 }
 
-/** Loads the latest résumé, creating an empty one if the store is empty. */
+/** Loads the latest resume, creating an empty one if the store is empty. */
 export function useLatestResume() {
   return useQuery({
     queryKey: resumeKeys.latest(),
@@ -37,7 +37,7 @@ export function useCreateResume() {
   return useMutation({
     mutationFn: (opts?: { title?: string; data?: Resume }) =>
       repo.createResume(opts),
-    // invalidate all (incl. `latest`) so the editor switches to the new résumé
+    // invalidate all (incl. `latest`) so the editor switches to the new resume
     onSuccess: () => qc.invalidateQueries({ queryKey: resumeKeys.all }),
   })
 }
@@ -45,7 +45,7 @@ export function useCreateResume() {
 /**
  * Autosave target. Writes content and keeps the detail cache in sync WITHOUT
  * refetching (the editor is the source of truth while editing). Only the list is
- * invalidated, so the résumé switcher reflects new recency order.
+ * invalidated, so the resume switcher reflects new recency order.
  */
 export function useUpdateResumeData(id: string) {
   const qc = useQueryClient()

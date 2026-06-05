@@ -1,6 +1,6 @@
 /**
  * AI engine types. A provider is the only thing you implement to wire a new backend
- * (on-device, Gemini, Anthropic, …) — register it in engine.ts and the whole résumé AI
+ * (on-device, Gemini, Anthropic, …) — register it in engine.ts and the whole resume AI
  * suite works through it unchanged. Open/closed: adding a provider touches no callers.
  */
 

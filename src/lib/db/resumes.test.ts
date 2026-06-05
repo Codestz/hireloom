@@ -18,8 +18,8 @@ afterEach(async () => {
 // distinct wall-clock ms so updatedAt ordering is deterministic in fast tests
 const tick = () => new Promise((r) => setTimeout(r, 5))
 
-describe('résumé repository (IndexedDB)', () => {
-  it('creates and lists résumés', async () => {
+describe('resume repository (IndexedDB)', () => {
+  it('creates and lists resumes', async () => {
     const a = await createResume({ title: 'First' })
     expect(a.id).toBeTruthy()
     expect(a.title).toBe('First')
@@ -31,7 +31,7 @@ describe('résumé repository (IndexedDB)', () => {
 
   it('blank title falls back to a default', async () => {
     const r = await createResume({ title: '   ' })
-    expect(r.title).toBe('Untitled résumé')
+    expect(r.title).toBe('Untitled resume')
   })
 
   it('updates content and bumps updatedAt; orders by recency', async () => {
@@ -72,7 +72,7 @@ describe('résumé repository (IndexedDB)', () => {
     expect(orig?.data.basics?.name).toBe('Ada')
   })
 
-  it('getOrCreateLatestResume seeds an empty résumé when store is empty', async () => {
+  it('getOrCreateLatestResume seeds an empty resume when store is empty', async () => {
     const created = await getOrCreateLatestResume()
     expect(created.id).toBeTruthy()
     expect(await listResumes()).toHaveLength(1)

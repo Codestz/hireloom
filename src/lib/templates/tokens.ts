@@ -4,10 +4,10 @@ import { z } from 'zod'
  * Design tokens shared by a template's HTML canvas and its @react-pdf renderer —
  * the contract that keeps preview and export visually matched (ARCHITECTURE §3, §7).
  * The full template engine (registry + renderers) lands in E1; this is the model
- * the résumé record persists.
+ * the resume record persists.
  */
 
-// Résumé fonts map 1:1 to @react-pdf built-ins so the canvas and PDF use identical
+// Resume fonts map 1:1 to @react-pdf built-ins so the canvas and PDF use identical
 // metrics (no font embedding). Brand fonts (Geist/Fraunces) stay in the app chrome.
 export const FONT_OPTIONS = ['sans', 'serif', 'mono'] as const
 export type FontOption = (typeof FONT_OPTIONS)[number]

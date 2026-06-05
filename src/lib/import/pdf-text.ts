@@ -98,7 +98,7 @@ export async function extractLinkedInColumns(
 }
 
 /**
- * Layout-agnostic extraction for *any* résumé PDF — every page's text in reading
+ * Layout-agnostic extraction for *any* resume PDF — every page's text in reading
  * order, one line per visual line. Semantic structuring is left to the AI import.
  */
 export async function extractPdfText(data: ArrayBuffer): Promise<string> {

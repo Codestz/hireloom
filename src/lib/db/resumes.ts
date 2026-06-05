@@ -6,7 +6,7 @@ import { db } from './db'
 import type { ResumeRecord } from './db'
 
 /**
- * CRUD over the local résumé store. Pure data layer — no React. TanStack Query
+ * CRUD over the local resume store. Pure data layer — no React. TanStack Query
  * hooks in queries.ts wrap these; the editor calls the hooks (see mem:conventions).
  */
 
@@ -32,7 +32,7 @@ export async function createResume(opts?: {
   const now = Date.now()
   const record: ResumeRecord = {
     id: newId(),
-    title: opts?.title?.trim() || 'Untitled résumé',
+    title: opts?.title?.trim() || 'Untitled resume',
     data: ensureResumeIds(opts?.data ?? createEmptyResume()),
     templateId: opts?.templateId ?? DEFAULT_TEMPLATE_ID,
     tokens: opts?.tokens ?? { ...DEFAULT_TOKENS },
@@ -43,7 +43,7 @@ export async function createResume(opts?: {
   return record
 }
 
-/** Overwrite résumé content (the editor's autosave target). Bumps updatedAt. */
+/** Overwrite resume content (the editor's autosave target). Bumps updatedAt. */
 export async function updateResumeData(
   id: string,
   data: Resume,
@@ -67,7 +67,7 @@ export async function updateResumeTemplate(
 
 export async function renameResume(id: string, title: string): Promise<void> {
   await db.resumes.update(id, {
-    title: title.trim() || 'Untitled résumé',
+    title: title.trim() || 'Untitled resume',
     updatedAt: Date.now(),
   })
 }
@@ -78,7 +78,7 @@ export async function deleteResume(id: string): Promise<void> {
 
 const BACKUP_VERSION = 1
 
-/** Serialize every résumé to a portable JSON backup (local-first safety net). */
+/** Serialize every resume to a portable JSON backup (local-first safety net). */
 export async function exportBackup(): Promise<string> {
   const resumes = await db.resumes.toArray()
   return JSON.stringify(
@@ -93,7 +93,7 @@ export async function exportBackup(): Promise<string> {
   )
 }
 
-/** Restore résumés from a backup file — each added as a new record. Returns the count. */
+/** Restore resumes from a backup file — each added as a new record. Returns the count. */
 export async function importBackup(json: string): Promise<number> {
   let parsed: { app?: string; resumes?: Array<Partial<ResumeRecord>> }
   try {
@@ -130,7 +130,7 @@ export async function duplicateResume(
 }
 
 /**
- * Editor entry point: return the most recent résumé, creating an empty one if the
+ * Editor entry point: return the most recent resume, creating an empty one if the
  * store is empty. Guarantees the editor always has something to bind to.
  */
 export async function getOrCreateLatestResume(): Promise<ResumeRecord> {

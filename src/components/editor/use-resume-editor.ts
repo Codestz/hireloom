@@ -25,7 +25,7 @@ const AUTOSAVE_MS = 600
  * pure view. All persistence goes through the `lib/db` hooks (no raw Dexie in components).
  */
 export function useResumeEditor(record: ResumeRecord) {
-  // The editable document is built once from the loaded résumé.
+  // The editable document is built once from the loaded resume.
   const initialDoc = useMemo(() => resumeToDoc(record.data), [record.data])
   const controller = useBlockDoc(initialDoc)
   const { doc } = controller

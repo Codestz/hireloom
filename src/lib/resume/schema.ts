@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { RichValueSchema } from './rich'
 
 /**
- * Canonical résumé model = JSON Resume schema (https://jsonresume.org/schema).
+ * Canonical resume model = JSON Resume schema (https://jsonresume.org/schema).
  *
  * Design choices (see mem:conventions):
  * - The Zod schema is the single source of truth; TS types are derived via `z.infer`.

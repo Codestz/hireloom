@@ -20,7 +20,7 @@ import type { Resume } from '#/lib/resume'
 import { cn } from '#/lib/utils.ts'
 
 /**
- * Import / replace a résumé from a file — any résumé PDF (AI-structured on-device), a
+ * Import / replace a resume from a file — any resume PDF (AI-structured on-device), a
  * LinkedIn "Save to PDF", or a JSON Resume. Everything is parsed in-browser (pdf.js +
  * the on-device model); nothing is uploaded.
  */
@@ -120,9 +120,9 @@ export function ImportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Import a résumé</DialogTitle>
+          <DialogTitle>Import a resume</DialogTitle>
           <DialogDescription>
-            Bring in an existing résumé to edit. Everything is parsed in your
+            Bring in an existing resume to edit. Everything is parsed in your
             browser — nothing is uploaded.
           </DialogDescription>
         </DialogHeader>
@@ -132,7 +132,7 @@ export function ImportDialog({
           <div className="flex flex-col gap-3 pt-1">
             <FilePick
               accept="application/pdf"
-              label="Any résumé PDF"
+              label="Any resume PDF"
               hint={
                 canAi
                   ? 'Structured by AI — review the result'
@@ -171,7 +171,7 @@ function ImportProgress({
   stage: 'extract' | 'structure'
   chars: number
 }) {
-  // The structured JSON for a typical résumé lands around ~1500 chars; ease toward 95%.
+  // The structured JSON for a typical resume lands around ~1500 chars; ease toward 95%.
   const pct = stage === 'extract' ? 8 : Math.min(95, 12 + (chars / 1500) * 83)
   return (
     <div className="flex flex-col gap-3 py-4">
@@ -189,7 +189,7 @@ function ImportProgress({
       </div>
       <p className="text-[11px] text-muted-foreground">
         {stage === 'structure'
-          ? `Building your résumé — ${chars} characters so far. On-device can take a minute.`
+          ? `Building your resume — ${chars} characters so far. On-device can take a minute.`
           : 'Extracting text in your browser — nothing is uploaded.'}
       </p>
     </div>

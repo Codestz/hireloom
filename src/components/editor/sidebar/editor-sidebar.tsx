@@ -193,7 +193,7 @@ export function EditorSidebar({
             Editing
           </p>
           <h2 className="mt-1 truncate font-serif text-base font-medium tracking-tight">
-            {title || 'Your résumé'}
+            {title || 'Your resume'}
           </h2>
         </div>
 

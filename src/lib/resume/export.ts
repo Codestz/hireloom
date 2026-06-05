@@ -16,7 +16,7 @@ export function buildResumeExport(resume: Resume): Resume {
   }
 }
 
-/** Trigger a client-side download of the résumé as JSON Resume. */
+/** Trigger a client-side download of the resume as JSON Resume. */
 export function downloadResumeJson(resume: Resume, title: string): void {
   const json = JSON.stringify(buildResumeExport(resume), null, 2)
   const blob = new Blob([json], { type: 'application/json' })

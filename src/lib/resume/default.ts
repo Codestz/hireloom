@@ -2,7 +2,7 @@ import { JSON_RESUME_SCHEMA_URL } from './schema'
 import type { Resume } from './schema'
 
 /**
- * A blank-but-valid résumé. Arrays are present-and-empty so the editor can map over
+ * A blank-but-valid resume. Arrays are present-and-empty so the editor can map over
  * sections without null checks. `meta.lastModified` is intentionally left undefined —
  * callers stamp it at save time (Date is unavailable in some build contexts).
  */

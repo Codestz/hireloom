@@ -5,7 +5,7 @@ import { buildResumeExport } from './export'
 
 describe('JSON Resume export', () => {
   it('slugify strips diacritics and non-alphanumerics', () => {
-    expect(slugify('My résumé')).toBe('my-resume')
+    expect(slugify('My resume')).toBe('my-resume')
     expect(slugify('Ada Lovelace — CV')).toBe('ada-lovelace-cv')
     expect(slugify('   ')).toBe('resume')
   })

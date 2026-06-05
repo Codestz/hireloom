@@ -3,7 +3,7 @@ import { DEFAULT_TOKENS } from '#/lib/templates/tokens'
 import type { ThemeTokens } from '#/lib/templates/tokens'
 
 /**
- * A complete sample résumé for the "Load a sample" demo — Esteban's current CV (Senior
+ * A complete sample resume for the "Load a sample" demo — Esteban's current CV (Senior
  * Software Engineer). Lets a first-time visitor see a fully-populated, good-looking
  * document immediately. Mirrors the source CV: serif, centered header, categorized
  * skills, full work history, education, and certifications.

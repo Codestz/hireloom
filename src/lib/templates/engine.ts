@@ -5,7 +5,7 @@ import type { PageSize, FontOption, ThemeTokens } from './tokens'
 /**
  * Template engine (ARCHITECTURE §7). A template provides two renderers — an HTML
  * Canvas and a @react-pdf Pdf — both driven by the SAME resolved tokens, which is
- * what keeps preview and export visually matched. Résumé fonts map 1:1 to react-pdf
+ * what keeps preview and export visually matched. Resume fonts map 1:1 to react-pdf
  * built-ins so metrics line up without embedding.
  */
 

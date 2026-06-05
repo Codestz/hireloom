@@ -1,7 +1,7 @@
 import { RESUME_SECTION_KEYS } from './schema'
 import type { Resume } from './schema'
 
-/** Section order used when a résumé has none yet. */
+/** Section order used when a resume has none yet. */
 export const DEFAULT_SECTION_ORDER: Array<string> = [...RESUME_SECTION_KEYS]
 
 function uid(): string {

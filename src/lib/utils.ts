@@ -7,7 +7,7 @@ export function cn(...inputs: Array<ClassValue>) {
   return twMerge(clsx(inputs))
 }
 
-/** Filename-safe slug; strips diacritics (résumé → resume). */
+/** Filename-safe slug; strips diacritics (resume → resume). */
 export function slugify(value: string): string {
   const slug = value
     .normalize('NFKD')

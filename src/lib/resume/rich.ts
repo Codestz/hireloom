@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /**
- * Rich text = ProseMirror/TipTap document JSON. Rich résumé fields (summaries,
+ * Rich text = ProseMirror/TipTap document JSON. Rich resume fields (summaries,
  * bullets, descriptions) hold either a plain string (legacy / freshly imported) OR
  * a rich doc (once edited on the canvas). Every consumer projects to plain text via
  * `richToPlainText`, so the transition is lossless and the build never breaks.
