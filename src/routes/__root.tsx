@@ -16,6 +16,12 @@ const SITE_URL = (
 ).replace(/\/+$/, '')
 const abs = (path: string) => (SITE_URL ? `${SITE_URL}${path}` : path)
 
+// Chrome Origin Trial token for the Prompt API (on-device AI without chrome://flags).
+// Supplied per-deploy via the VITE_ORIGIN_TRIAL env var (set in Vercel) — origin-bound and
+// expiring, so it lives in env, not the repo. Renew at developer.chrome.com/origintrials.
+const ORIGIN_TRIAL = (import.meta.env as Record<string, string | undefined>)
+  .VITE_ORIGIN_TRIAL
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -38,6 +44,10 @@ export const Route = createRootRoute({
         name: 'theme-color',
         content: '#171717',
       },
+      // Enables Chrome's built-in Prompt API for visitors without flags (on-device AI).
+      ...(ORIGIN_TRIAL
+        ? [{ httpEquiv: 'origin-trial', content: ORIGIN_TRIAL }]
+        : []),
       // Social unfurl (LinkedIn/Twitter). Absolute URLs when VITE_SITE_URL is set.
       { property: 'og:title', content: 'HireLoom — a résumé you actually own' },
       {
