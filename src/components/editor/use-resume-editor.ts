@@ -5,16 +5,19 @@ import { downloadResumePdf } from '#/lib/export/pdf'
 import { SECTIONS } from '#/lib/blocks/sections'
 import {
   updateResumeData,
+  updateResumeTemplate,
+  updateResumeTokens,
   useUpdateResumeData,
   useUpdateResumeTemplate,
   useUpdateResumeTokens,
 } from '#/lib/db'
 import type { ResumeRecord } from '#/lib/db'
 import { docToResume, resumeToDoc } from '#/lib/blocks/json-resume'
-import { downloadResumeJson } from '#/lib/resume'
+import { createEmptyResume, downloadResumeJson } from '#/lib/resume'
 import { slugify } from '#/lib/utils.ts'
 import type { Resume } from '#/lib/resume'
 import { getTemplate, resolveTokens } from '#/lib/templates'
+import { DEFAULT_TEMPLATE_ID, DEFAULT_TOKENS } from '#/lib/templates/tokens'
 import type { ThemeTokens } from '#/lib/templates/tokens'
 
 const AUTOSAVE_MS = 600
@@ -84,6 +87,15 @@ export function useResumeEditor(record: ResumeRecord) {
     )
   }
 
+  // Wipe content + design back to a blank slate, then reload the editor fresh.
+  function resetResume() {
+    void Promise.all([
+      updateResumeData(record.id, createEmptyResume()),
+      updateResumeTokens(record.id, DEFAULT_TOKENS),
+      updateResumeTemplate(record.id, DEFAULT_TEMPLATE_ID),
+    ]).then(() => window.location.assign('/editor'))
+  }
+
   function exportJson() {
     downloadResumeJson(docToResume(doc, record.data), record.title)
     toast.success('Exported JSON Resume')
@@ -109,6 +121,7 @@ export function useResumeEditor(record: ResumeRecord) {
     changeTokens,
     applyTemplate,
     replaceResume,
+    resetResume,
     exportJson,
     exportPdf,
   }

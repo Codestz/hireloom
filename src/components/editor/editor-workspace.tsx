@@ -45,6 +45,7 @@ export function EditorWorkspace({ record, autoImport }: EditorWorkspaceProps) {
               onApplyTemplate={editor.applyTemplate}
               onExportPdf={editor.exportPdf}
               onExportJson={editor.exportJson}
+              onReset={editor.resetResume}
             />
           </aside>
 

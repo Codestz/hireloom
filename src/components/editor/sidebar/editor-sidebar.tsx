@@ -13,6 +13,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import type { ThemeTokens } from '#/lib/templates/tokens'
 import { Button } from '#/components/ui/button'
+import { StartOverDialog } from '#/components/editor/dialogs/start-over-dialog'
 import { AiChatPanel } from '#/components/editor/panels/ai-chat-panel'
 import { AiStudioPanel } from '#/components/editor/panels/ai-studio-panel'
 import { AtsPanel } from '#/components/editor/panels/ats-panel'
@@ -34,6 +35,7 @@ interface SidebarContext {
   onApplyTemplate: (id: string) => void
   onExportPdf: () => void
   onExportJson: () => void
+  onReset: () => void
 }
 
 interface SidebarMode {
@@ -92,7 +94,11 @@ const MODES: Array<SidebarMode> = [
     label: 'Export',
     icon: DownloadIcon,
     render: (c) => (
-      <ExportPanel onExportPdf={c.onExportPdf} onExportJson={c.onExportJson} />
+      <ExportPanel
+        onExportPdf={c.onExportPdf}
+        onExportJson={c.onExportJson}
+        onReset={c.onReset}
+      />
     ),
   },
 ]
@@ -100,9 +106,11 @@ const MODES: Array<SidebarMode> = [
 function ExportPanel({
   onExportPdf,
   onExportJson,
+  onReset,
 }: {
   onExportPdf: () => void
   onExportJson: () => void
+  onReset: () => void
 }) {
   return (
     <div className="flex flex-col gap-2 p-3">
@@ -124,6 +132,13 @@ function ExportPanel({
       <p className="mt-1 px-1 text-xs text-muted-foreground">
         Text-based, ATS-safe. Generated on your device — nothing is uploaded.
       </p>
+
+      <div className="mt-4 border-t border-border pt-3">
+        <p className="px-1 pb-1 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+          Danger zone
+        </p>
+        <StartOverDialog onConfirm={onReset} />
+      </div>
     </div>
   )
 }
@@ -138,6 +153,7 @@ export function EditorSidebar({
   onApplyTemplate,
   onExportPdf,
   onExportJson,
+  onReset,
 }: {
   title?: string
   controller: Controller
@@ -148,6 +164,7 @@ export function EditorSidebar({
   onApplyTemplate: (id: string) => void
   onExportPdf: () => void
   onExportJson: () => void
+  onReset: () => void
 }) {
   const [mode, setMode] = useState<Mode>('build')
   const ctx: SidebarContext = {
@@ -159,6 +176,7 @@ export function EditorSidebar({
     onApplyTemplate,
     onExportPdf,
     onExportJson,
+    onReset,
   }
   const activeMode = MODES.find((m) => m.key === mode)
 
