@@ -2,6 +2,8 @@ import type { ResolvedTokens } from '#/lib/templates'
 import { EditableText } from '#/components/blocks/fields/editable-text'
 import { useBlockDocController } from '#/components/blocks/state/block-doc-context'
 import type { CanvasElement } from '#/lib/canvas/model'
+import { FONT_CSS } from '#/lib/canvas/fonts'
+import type { FontChoice } from '#/lib/canvas/fonts'
 import { SEPARATOR_GLYPH, asText, elementStyle, separatorVariant } from './node-style'
 
 /**
@@ -12,27 +14,37 @@ import { SEPARATOR_GLYPH, asText, elementStyle, separatorVariant } from './node-
 export function ElementView({
   el,
   tokens,
+  inheritedFont,
 }: {
   el: CanvasElement
   tokens: ResolvedTokens
+  inheritedFont?: FontChoice
 }) {
   const { onCanvasUpdateData } = useBlockDocController()
   const style = elementStyle(el.style)
+  // Effective font: own override → inherited (ancestor box / document) → token default.
+  const font = el.style?.fontFamily ?? inheritedFont
+  const fontCss = font ? FONT_CSS[font] : undefined
 
   switch (el.kind) {
     case 'heading': {
       const level = el.data.level === 1 ? 1 : el.data.level === 3 ? 3 : 2
+      // H1 = the name (large, bold). H2 = section label (small, uppercase, accent, regular).
+      // H3 = a subheading (bold ink, not uppercase) — visibly distinct from H2.
       return (
         <div
           style={{
-            fontFamily: tokens.fontHeadingCss,
-            // Match the classic SectionHeading: section labels (h2/h3) are NOT bold —
-            // uppercase + accent + letter-spacing carry them; only the name (h1) is bold.
-            fontWeight: level === 1 ? 700 : 400,
-            fontSize: level === 1 ? tokens.baseFontSize * 1.8 : tokens.baseFontSize * 0.85,
-            textTransform: level >= 2 ? 'uppercase' : undefined,
-            letterSpacing: level >= 2 ? 1 : undefined,
-            color: level >= 2 ? tokens.accent : undefined,
+            fontFamily: fontCss ?? tokens.fontHeadingCss,
+            fontWeight: level === 2 ? 400 : 700,
+            fontSize:
+              level === 1
+                ? tokens.baseFontSize * 1.8
+                : level === 3
+                  ? tokens.baseFontSize * 1.05
+                  : tokens.baseFontSize * 0.85,
+            textTransform: level === 2 ? 'uppercase' : undefined,
+            letterSpacing: level === 2 ? 1 : undefined,
+            color: level === 2 ? tokens.accent : undefined,
             ...style,
           }}
         >
@@ -46,7 +58,7 @@ export function ElementView({
     }
     case 'text':
       return (
-        <div style={{ whiteSpace: 'pre-wrap', ...style }}>
+        <div style={{ whiteSpace: 'pre-wrap', ...(fontCss ? { fontFamily: fontCss } : {}), ...style }}>
           <EditableText
             value={asText(el.data.text)}
             placeholder="Text"
@@ -63,7 +75,15 @@ export function ElementView({
       // Mirror the classic list (block-field.tsx): paddingLeft 16, manual • bullet in a
       // baseline flex row with a 6px gap — so indentation matches the typed layout exactly.
       return (
-        <ul style={{ margin: 0, paddingLeft: 16, listStyle: 'none', ...style }}>
+        <ul
+          style={{
+            margin: 0,
+            paddingLeft: 16,
+            listStyle: 'none',
+            ...(fontCss ? { fontFamily: fontCss } : {}),
+            ...style,
+          }}
+        >
           {items.map((it, i) => (
             <li
               key={i}

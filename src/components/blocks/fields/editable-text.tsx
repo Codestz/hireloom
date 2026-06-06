@@ -30,6 +30,9 @@ export function EditableText({
     <span
       contentEditable
       suppressContentEditableWarning
+      spellCheck={false}
+      autoCorrect="off"
+      autoCapitalize="off"
       role="textbox"
       data-placeholder={placeholder}
       data-field={dataField}

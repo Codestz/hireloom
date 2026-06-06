@@ -19,6 +19,7 @@ import {
 import { useCanvasSelection } from '#/components/blocks/canvas-tree/selection'
 import { isBox, makeElement } from '#/lib/canvas/model'
 import type { CanvasBox, CanvasElement } from '#/lib/canvas/model'
+import { FONT_OPTIONS, isFontChoice } from '#/lib/canvas/fonts'
 import { findNode } from '#/lib/canvas/tree-ops'
 import {
   ColorField,
@@ -135,6 +136,14 @@ function LayoutSection({ node, controller }: Ctx) {
       <Field label="Gap (px)">
         <NumberField value={p.gap} onChange={(gap) => set({ gap })} />
       </Field>
+
+      <Field label="Font (cascades to children)">
+        <SelectField
+          value={p.fontFamily ?? ''}
+          onChange={(v) => set({ fontFamily: isFontChoice(v) ? v : undefined })}
+          options={FONT_OPTIONS}
+        />
+      </Field>
     </Group>
   )
 }
@@ -237,6 +246,13 @@ function TypographySection({ node, controller }: Ctx) {
   const set = (patch: CanvasElement['style']) => controller.onCanvasUpdateStyle(el.id, patch)
   return (
     <Group title="Typography" icon={TypeIcon}>
+      <Field label="Font">
+        <SelectField
+          value={s.fontFamily ?? ''}
+          onChange={(v) => set({ fontFamily: isFontChoice(v) ? v : undefined })}
+          options={FONT_OPTIONS}
+        />
+      </Field>
       <div className="grid grid-cols-2 gap-2">
         <Field label="Size (px)">
           <NumberField value={s.fontSize} onChange={(fontSize) => set({ fontSize })} />

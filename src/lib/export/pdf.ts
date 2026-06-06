@@ -7,6 +7,8 @@ import { PDF_VFS_FONTS } from './pdf-fonts'
 import { getSection } from '#/lib/blocks/sections'
 import { isBox } from '#/lib/canvas/model'
 import type { CanvasBox, CanvasNode, ElementStyle } from '#/lib/canvas/model'
+import { FONT_PDF } from '#/lib/canvas/fonts'
+import type { FontChoice } from '#/lib/canvas/fonts'
 
 /**
  * Our own client-side PDF export (pdfmake) — builds the file in-browser and downloads
@@ -756,28 +758,36 @@ function pdfElStyle(style: ElementStyle | undefined): Record<string, unknown> {
 
 type PdfObj = Record<string, unknown>
 
-function pdfElement(el: CanvasNode, t: ResolvedTokens, headingFont: PdfFamily): PdfObj {
+function pdfElement(
+  el: CanvasNode,
+  t: ResolvedTokens,
+  headingFont: PdfFamily,
+  inheritedFont?: FontChoice,
+): PdfObj {
   const data = (el as { data?: Record<string, unknown> }).data ?? {}
-  const style = pdfElStyle((el as { style?: ElementStyle }).style)
+  const elStyle = (el as { style?: ElementStyle }).style
+  const style = pdfElStyle(elStyle)
   const fs = t.baseFontSize
+  const font = elStyle?.fontFamily ?? inheritedFont
+  const fontProp = font ? { font: FONT_PDF[font] } : {}
   switch (el.kind) {
     case 'heading': {
       const level = data.level === 1 ? 1 : data.level === 3 ? 3 : 2
       const text = S(data.text)
       return {
-        text: level >= 2 ? text.toUpperCase() : text,
-        font: headingFont,
-        fontSize: level === 1 ? fs * 1.8 : fs * 0.85,
-        bold: level === 1,
-        color: level >= 2 ? t.accent : INK,
-        characterSpacing: level >= 2 ? 1 : 0,
+        text: level === 2 ? text.toUpperCase() : text,
+        font: font ? FONT_PDF[font] : headingFont,
+        fontSize: level === 1 ? fs * 1.8 : level === 3 ? fs * 1.05 : fs * 0.85,
+        bold: level !== 2,
+        color: level === 2 ? t.accent : INK,
+        characterSpacing: level === 2 ? 1 : 0,
         ...style,
       }
     }
     case 'text':
-      return { text: S(data.text), ...style }
+      return { text: S(data.text), ...fontProp, ...style }
     case 'list':
-      return { ul: A(data.items).filter(Boolean), markerColor: t.accent, ...style }
+      return { ul: A(data.items).filter(Boolean), markerColor: t.accent, ...fontProp, ...style }
     case 'separator':
       return { text: SEP_GLYPH[S(data.variant)] ?? '·', color: MUTED, ...style }
     case 'divider':
@@ -809,18 +819,24 @@ function pdfChildWidth(child: CanvasNode, between: boolean, index: number): stri
   return between && index === 0 ? '*' : 'auto'
 }
 
-function pdfNode(node: CanvasNode, t: ResolvedTokens, headingFont: PdfFamily): PdfObj {
-  if (!isBox(node)) return pdfElement(node, t, headingFont)
+function pdfNode(
+  node: CanvasNode,
+  t: ResolvedTokens,
+  headingFont: PdfFamily,
+  inheritedFont?: FontChoice,
+): PdfObj {
+  if (!isBox(node)) return pdfElement(node, t, headingFont, inheritedFont)
   const p = node.props
   const gap = p.gap ?? 0
   const margin = p.margin !== undefined ? [p.margin, p.margin, p.margin, p.margin] : undefined
   const horizontal =
     p.display === 'grid' || ((p.display ?? 'flex') === 'flex' && p.direction === 'row')
+  const childFont = p.fontFamily ?? inheritedFont
 
   if (horizontal) {
     const between = p.justify === 'between'
     const columns = node.children.map((c, i) => ({
-      ...pdfNode(c, t, headingFont),
+      ...pdfNode(c, t, headingFont, childFont),
       width: pdfChildWidth(c, between, i),
     }))
     return { columns, columnGap: gap || 6, ...(margin ? { margin } : {}) }
@@ -828,7 +844,7 @@ function pdfNode(node: CanvasNode, t: ResolvedTokens, headingFont: PdfFamily): P
 
   // column / block → vertical stack; emulate gap with a top margin on each child after the first
   const stack = node.children.map((c, i) => {
-    const obj = pdfNode(c, t, headingFont)
+    const obj = pdfNode(c, t, headingFont, childFont)
     if (gap && i > 0) {
       const m = Array.isArray(obj.margin) ? [...(obj.margin as Array<number>)] : [0, 0, 0, 0]
       m[1] = (m[1] ?? 0) + gap
@@ -845,7 +861,7 @@ function buildCanvasDoc(root: CanvasBox, t: ResolvedTokens): TDocumentDefinition
     pageSize: 'A4',
     pageMargins: [48, 48, 48, 48],
     defaultStyle: { font: familyOf(t.fontBodyPdf), fontSize: t.baseFontSize, color: BODY, lineHeight: 1.3 },
-    content: [pdfNode(root, t, headingFont)] as unknown as Array<Content>,
+    content: [pdfNode(root, t, headingFont, root.props.fontFamily)] as unknown as Array<Content>,
   }
 }
 

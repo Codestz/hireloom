@@ -80,9 +80,12 @@ export interface BoxProps {
   radius?: number
   /** Width in /12 units when this Box sits inside a flex-row parent (or grid cell). */
   span?: number
+  /** Font family for this box's subtree (cascades to descendants unless they override). */
+  fontFamily?: 'sans' | 'serif' | 'mono'
 }
 
 export interface ElementStyle {
+  fontFamily?: 'sans' | 'serif' | 'mono'
   fontSize?: number
   fontWeight?: number
   italic?: boolean

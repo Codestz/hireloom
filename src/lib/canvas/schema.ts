@@ -24,11 +24,13 @@ const BoxPropsSchema = z
     border: z.string().optional(),
     radius: z.number().optional(),
     span: z.number().optional(),
+    fontFamily: z.enum(['sans', 'serif', 'mono']).optional(),
   })
   .passthrough()
 
 const ElementStyleSchema = z
   .object({
+    fontFamily: z.enum(['sans', 'serif', 'mono']).optional(),
     fontSize: z.number().optional(),
     fontWeight: z.number().optional(),
     italic: z.boolean().optional(),

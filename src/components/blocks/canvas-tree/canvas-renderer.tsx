@@ -3,6 +3,7 @@ import { useDroppable } from '@dnd-kit/core'
 import type { ResolvedTokens } from '#/lib/templates'
 import { isBox, isHorizontal } from '#/lib/canvas/model'
 import type { CanvasBox, CanvasNode } from '#/lib/canvas/model'
+import type { FontChoice } from '#/lib/canvas/fonts'
 import { useCanvasSelection } from './selection'
 import { useDragState } from './drag-context'
 import { boxStyle, childFlex } from './node-style'
@@ -29,18 +30,35 @@ function DropLine({ horizontal }: { horizontal: boolean }) {
  * Mounted by BlockDocument when `doc.canvas` is present.
  */
 
-function NodeView({ node, tokens }: { node: CanvasNode; tokens: ResolvedTokens }) {
+function NodeView({
+  node,
+  tokens,
+  inheritedFont,
+}: {
+  node: CanvasNode
+  tokens: ResolvedTokens
+  inheritedFont?: FontChoice
+}) {
   return isBox(node) ? (
-    <BoxView box={node} tokens={tokens} />
+    <BoxView box={node} tokens={tokens} inheritedFont={inheritedFont} />
   ) : (
-    <ElementView el={node} tokens={tokens} />
+    <ElementView el={node} tokens={tokens} inheritedFont={inheritedFont} />
   )
 }
 
-function BoxView({ box, tokens }: { box: CanvasBox; tokens: ResolvedTokens }) {
+function BoxView({
+  box,
+  tokens,
+  inheritedFont,
+}: {
+  box: CanvasBox
+  tokens: ResolvedTokens
+  inheritedFont?: FontChoice
+}) {
   const horizontal = isHorizontal(box)
   const { setNodeRef } = useDroppable({ id: box.id })
   const drag = useDragState()
+  const childFont = box.props.fontFamily ?? inheritedFont
 
   const items: Array<ReactNode> = box.children.map((child) => (
     <Selectable
@@ -49,7 +67,7 @@ function BoxView({ box, tokens }: { box: CanvasBox; tokens: ResolvedTokens }) {
       parentId={box.id}
       flex={horizontal ? childFlex(child) : undefined}
     >
-      <NodeView node={child} tokens={tokens} />
+      <NodeView node={child} tokens={tokens} inheritedFont={childFont} />
     </Selectable>
   ))
 
@@ -79,7 +97,7 @@ export function CanvasRenderer({
   return (
     <div onMouseLeave={() => hover(null)}>
       <Selectable node={root} parentId={null}>
-        <BoxView box={root} tokens={tokens} />
+        <BoxView box={root} tokens={tokens} inheritedFont={root.props.fontFamily} />
       </Selectable>
     </div>
   )
