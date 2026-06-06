@@ -6,6 +6,7 @@
  */
 import { enginePrompt, enginePromptStream, engineReady } from './engine'
 import { extractJson } from './json'
+import type { ChatOp } from '#/lib/canvas/chat-ops'
 
 /** True when the *currently selected* engine can run a request. */
 export async function aiActionsAvailable(): Promise<boolean> {
@@ -178,6 +179,53 @@ export async function composeBlock(request: string): Promise<unknown> {
     CREATIVE,
   )
   return extractJson(out)
+}
+
+const CHAT_SCHEMA = `You help edit a résumé built as a tree of layout primitives. You are given a compact OUTLINE of the current document — each line shows a node's kind, a role/heading/text preview, and its id in (parentheses). Use those ids to target edits.
+
+Reply conversationally in "reply". When the user asks for a concrete change, also return "ops" to apply it. If the request is ambiguous or missing specifics, ASK in "reply" and return "ops": [] — never invent facts.
+
+Return ONLY JSON (no markdown): { "reply": <string>, "ops": [ <op>, ... ] }
+
+Ops:
+- { "op":"add", "target": <box role e.g. "skills"|"work"|"education" | a node id | "page">, "node": <primitive subtree> }
+- { "op":"edit_text", "id": <node id>, "text": <new text> }
+- { "op":"remove", "id": <node id> }
+
+Primitive subtree (for "add"):
+- Box: { "kind":"box", "props":{ "display":"flex","direction":"column"|"row","gap":<px> }, "role"?:<string>, "children":[...] }
+- Heading: { "kind":"heading","data":{ "text":<string>,"level":1|2|3 } }
+- Text: { "kind":"text","data":{ "text":<string> } }
+- List: { "kind":"list","data":{ "items":[<string>,...] } }
+- Separator: { "kind":"separator","data":{ "variant":"dot"|"dash" } }   Divider: { "kind":"divider" }
+A new section = Box(role) with a Heading (level 2) then its content.`
+
+export interface ChatResult {
+  reply: string
+  ops: Array<ChatOp>
+}
+
+/**
+ * The CV chat over the canvas: given the conversation + a document outline, returns a reply and
+ * structured ops to apply (caller previews then applies via applyChatOps). Cloud Gemini handles
+ * this well; on-device models are usually too weak for the structured JSON.
+ */
+export async function chatBuildCanvas(
+  history: ReadonlyArray<{ role: 'user' | 'assistant'; text: string }>,
+  outline: string,
+): Promise<ChatResult> {
+  const convo = history.map((m) => `${m.role.toUpperCase()}: ${m.text}`).join('\n')
+  const out = await promptOnce(
+    `${CHAT_SCHEMA}\n\nDOCUMENT OUTLINE:\n${outline}\n\nCONVERSATION:\n${convo}\nASSISTANT (JSON only):`,
+    CREATIVE,
+  )
+  const parsed = extractJson<{ reply?: unknown; ops?: unknown }>(out)
+  const reply =
+    typeof parsed?.reply === 'string' && parsed.reply.trim()
+      ? parsed.reply
+      : 'Sorry — I couldn’t parse that. Could you rephrase?'
+  const ops = Array.isArray(parsed?.ops) ? (parsed.ops as Array<ChatOp>) : []
+  return { reply, ops }
 }
 
 export interface ChatAction {

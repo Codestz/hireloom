@@ -468,6 +468,15 @@ export function useBlockDoc(initial: BlockDoc) {
     [mutateCanvas, bump],
   )
 
+  // Replace the whole canvas root (used by the AI chat after applying structured ops).
+  const onSetCanvasRoot = useCallback(
+    (root: CanvasBox) => {
+      mutateCanvas(() => root)
+      bump()
+    },
+    [mutateCanvas, bump],
+  )
+
   // The stable editing surface — provided to the document tree via context.
   const actions = useMemo(
     () => ({
@@ -496,6 +505,7 @@ export function useBlockDoc(initial: BlockDoc) {
       onCanvasInsertNode,
       onCanvasRemoveNode,
       onCanvasMoveNode,
+      onSetCanvasRoot,
     }),
     [
       onHeaderChange,
@@ -523,6 +533,7 @@ export function useBlockDoc(initial: BlockDoc) {
       onCanvasInsertNode,
       onCanvasRemoveNode,
       onCanvasMoveNode,
+      onSetCanvasRoot,
     ],
   )
 
