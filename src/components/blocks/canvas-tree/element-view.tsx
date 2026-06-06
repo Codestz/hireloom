@@ -1,5 +1,8 @@
+import { useContext } from 'react'
 import type { ResolvedTokens } from '#/lib/templates'
 import { EditableText } from '#/components/blocks/fields/editable-text'
+import { AiTextMenu } from '#/components/blocks/ai/ai-text-menu'
+import { AiEnabledContext } from '#/components/blocks/ai/ai-context'
 import { useBlockDocController } from '#/components/blocks/state/block-doc-context'
 import type { CanvasElement } from '#/lib/canvas/model'
 import { FONT_CSS } from '#/lib/canvas/fonts'
@@ -21,10 +24,15 @@ export function ElementView({
   inheritedFont?: FontChoice
 }) {
   const { onCanvasUpdateData } = useBlockDocController()
+  const aiEnabled = useContext(AiEnabledContext)
   const style = elementStyle(el.style)
   // Effective font: own override → inherited (ancestor box / document) → token default.
   const font = el.style?.fontFamily ?? inheritedFont
   const fontCss = font ? FONT_CSS[font] : undefined
+
+  // Inline ✨ menu (Improve/Expand/Compact/…) for an editable text run.
+  const aiMenu = (get: () => string, apply: (text: string) => void) =>
+    aiEnabled ? <AiTextMenu getText={get} onApply={apply} /> : null
 
   switch (el.kind) {
     case 'heading': {
@@ -48,22 +56,31 @@ export function ElementView({
             ...style,
           }}
         >
-          <EditableText
-            value={asText(el.data.text)}
-            placeholder="Heading"
-            onChange={(text) => onCanvasUpdateData(el.id, { text })}
-          />
+          <span className="group/row" data-ai-row style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4 }}>
+            <EditableText
+              value={asText(el.data.text)}
+              placeholder="Heading"
+              onChange={(text) => onCanvasUpdateData(el.id, { text })}
+            />
+            {aiMenu(() => asText(el.data.text), (text) => onCanvasUpdateData(el.id, { text }))}
+          </span>
         </div>
       )
     }
     case 'text':
       return (
-        <div style={{ whiteSpace: 'pre-wrap', ...(fontCss ? { fontFamily: fontCss } : {}), ...style }}>
+        <div
+          className="group/row"
+          data-ai-row
+          style={{ display: 'flex', alignItems: 'baseline', gap: 4, whiteSpace: 'pre-wrap', ...(fontCss ? { fontFamily: fontCss } : {}), ...style }}
+        >
           <EditableText
             value={asText(el.data.text)}
             placeholder="Text"
             onChange={(text) => onCanvasUpdateData(el.id, { text })}
+            style={{ flex: 1 }}
           />
+          {aiMenu(() => asText(el.data.text), (text) => onCanvasUpdateData(el.id, { text }))}
         </div>
       )
     case 'list': {
@@ -87,6 +104,8 @@ export function ElementView({
           {items.map((it, i) => (
             <li
               key={i}
+              className="group/row"
+              data-ai-row
               style={{
                 display: 'flex',
                 alignItems: 'baseline',
@@ -95,7 +114,8 @@ export function ElementView({
               }}
             >
               <span aria-hidden>•</span>
-              <EditableText value={it} onChange={(text) => setItem(i, text)} />
+              <EditableText value={it} onChange={(text) => setItem(i, text)} style={{ flex: 1 }} />
+              {aiMenu(() => items[i], (text) => setItem(i, text))}
             </li>
           ))}
         </ul>
