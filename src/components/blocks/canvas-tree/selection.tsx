@@ -10,18 +10,24 @@ import type { ReactNode } from 'react'
 interface CanvasSelectionValue {
   selectedId: string | null
   select: (id: string | null) => void
+  /** Innermost node currently under the pointer (for hover affordance). */
+  hoveredId: string | null
+  hover: (id: string | null) => void
 }
 
 const CanvasSelectionContext = createContext<CanvasSelectionValue>({
   selectedId: null,
   select: () => {},
+  hoveredId: null,
+  hover: () => {},
 })
 
 export function CanvasSelectionProvider({ children }: { children: ReactNode }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
   const value = useMemo(
-    () => ({ selectedId, select: setSelectedId }),
-    [selectedId],
+    () => ({ selectedId, select: setSelectedId, hoveredId, hover: setHoveredId }),
+    [selectedId, hoveredId],
   )
   return (
     <CanvasSelectionContext.Provider value={value}>

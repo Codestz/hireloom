@@ -3,6 +3,7 @@ import {
   AlignLeftIcon,
   AlignRightIcon,
   BoldIcon,
+  ChevronRightIcon,
   ColumnsIcon,
   HeadingIcon,
   ItalicIcon,
@@ -22,7 +23,8 @@ import type { useBlockDoc } from '#/components/blocks'
 import { useCanvasSelection } from '#/components/blocks/canvas-tree/selection'
 import { isBox, makeElement } from '#/lib/canvas/model'
 import type { CanvasBox, CanvasElement, CanvasNode } from '#/lib/canvas/model'
-import { findNode } from '#/lib/canvas/tree-ops'
+import { findNode, pathToNode } from '#/lib/canvas/tree-ops'
+import { Fragment } from 'react'
 import {
   ColorField,
   Field,
@@ -388,14 +390,37 @@ export function SettingsPanel({ controller }: { controller: Controller }) {
   const isRoot = node.id === root.id
   const sections = SECTIONS.filter((s) => s.appliesTo(node))
 
+  const path = pathToNode(root, node.id)
+
   return (
     <div>
-      <div className="flex items-center gap-2 border-b border-border px-3 py-3">
-        <span
-          className="inline-block size-2 rounded-full"
-          style={{ background: isBox(node) ? '#0d9488' : '#6366f1' }}
-        />
-        <span className="text-xs font-semibold">{KIND_LABEL[node.kind] ?? node.kind}</span>
+      <div className="border-b border-border px-3 py-2.5">
+        <div className="flex flex-wrap items-center gap-0.5 text-[11px]">
+          {path.map((id, i) => {
+            const n = findNode(root, id)
+            const label = n ? (KIND_LABEL[n.kind] ?? n.kind) : id
+            const last = i === path.length - 1
+            return (
+              <Fragment key={id}>
+                {i > 0 ? (
+                  <ChevronRightIcon className="size-3 shrink-0 text-muted-foreground/40" />
+                ) : null}
+                <button
+                  type="button"
+                  disabled={last}
+                  onClick={() => select(id)}
+                  className={
+                    last
+                      ? 'font-semibold text-foreground'
+                      : 'text-muted-foreground transition-colors hover:text-foreground'
+                  }
+                >
+                  {label}
+                </button>
+              </Fragment>
+            )
+          })}
+        </div>
       </div>
 
       {sections.map((s) => (

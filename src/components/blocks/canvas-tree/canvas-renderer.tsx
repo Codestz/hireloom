@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import type { ResolvedTokens } from '#/lib/templates'
 import { EditableText } from '#/components/blocks/fields/editable-text'
@@ -245,16 +244,18 @@ const KIND_LABEL: Record<string, string> = {
  */
 function Selectable({
   node,
+  parentId,
   flex,
   children,
 }: {
   node: CanvasNode
+  parentId: string | null
   flex?: CSSProperties
   children: ReactNode
 }) {
-  const { selectedId, select } = useCanvasSelection()
-  const [hovered, setHovered] = useState(false)
+  const { selectedId, select, hoveredId, hover } = useCanvasSelection()
   const selected = selectedId === node.id
+  const hovered = hoveredId === node.id && !selected
   const box = isBox(node)
   const color = box ? SELECT_COLOR.box : SELECT_COLOR.element
   const lineStyle = box ? 'dashed' : 'solid'
@@ -269,8 +270,12 @@ function Selectable({
         e.stopPropagation()
         select(node.id)
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      // onMouseOver bubbles, so the innermost node's handler fires first; stopPropagation
+      // then prevents ancestors from also marking themselves hovered (no nested noise).
+      onMouseOver={(e) => {
+        e.stopPropagation()
+        hover(node.id)
+      }}
       style={{
         ...flex,
         position: 'relative',
@@ -288,20 +293,44 @@ function Selectable({
             left: 0,
             transform: 'translateY(-100%)',
             zoom: 'var(--chrome-zoom, 1)' as unknown as number,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
             background: color,
             color: '#fff',
             fontSize: 9,
             lineHeight: 1.4,
-            padding: '1px 5px',
+            padding: '1px 4px 1px 6px',
             borderRadius: 3,
             fontFamily: 'ui-sans-serif, system-ui, sans-serif',
             letterSpacing: 0.3,
             whiteSpace: 'nowrap',
-            pointerEvents: 'none',
             zIndex: 10,
           }}
         >
           {KIND_LABEL[node.kind] ?? node.kind}
+          {parentId ? (
+            <button
+              type="button"
+              title="Select parent container"
+              onClick={(e) => {
+                e.stopPropagation()
+                select(parentId)
+              }}
+              style={{
+                display: 'inline-flex',
+                cursor: 'pointer',
+                border: 'none',
+                background: 'rgba(255,255,255,0.25)',
+                color: '#fff',
+                borderRadius: 2,
+                padding: '0 3px',
+                lineHeight: 1.3,
+              }}
+            >
+              ↑
+            </button>
+          ) : null}
         </span>
       ) : null}
       {children}
@@ -317,6 +346,7 @@ function BoxView({ box, tokens }: { box: CanvasBox; tokens: ResolvedTokens }) {
         <Selectable
           key={child.id}
           node={child}
+          parentId={box.id}
           flex={horizontal ? childFlex(child) : undefined}
         >
           <NodeView node={child} tokens={tokens} />
@@ -333,9 +363,12 @@ export function CanvasRenderer({
   root: CanvasBox
   tokens: ResolvedTokens
 }) {
+  const { hover } = useCanvasSelection()
   return (
-    <Selectable node={root}>
-      <BoxView box={root} tokens={tokens} />
-    </Selectable>
+    <div onMouseLeave={() => hover(null)}>
+      <Selectable node={root} parentId={null}>
+        <BoxView box={root} tokens={tokens} />
+      </Selectable>
+    </div>
   )
 }
