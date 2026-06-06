@@ -125,8 +125,10 @@ function ElementView({
         <div
           style={{
             fontFamily: tokens.fontHeadingCss,
-            fontWeight: 700,
-            fontSize: level === 1 ? tokens.baseFontSize * 1.8 : tokens.baseFontSize,
+            // Match the classic SectionHeading: section labels (h2/h3) are NOT bold —
+            // uppercase + accent + letter-spacing carry them; only the name (h1) is bold.
+            fontWeight: level === 1 ? 700 : 400,
+            fontSize: level === 1 ? tokens.baseFontSize * 1.8 : tokens.baseFontSize * 0.85,
             textTransform: level >= 2 ? 'uppercase' : undefined,
             letterSpacing: level >= 2 ? 1 : undefined,
             color: level >= 2 ? tokens.accent : undefined,
@@ -159,18 +161,21 @@ function ElementView({
         onCanvasUpdateData(el.id, {
           items: items.map((v, j) => (j === i ? text : v)),
         })
+      // Mirror the classic list (block-field.tsx): paddingLeft 16, manual • bullet in a
+      // baseline flex row with a 6px gap — so indentation matches the typed layout exactly.
       return (
-        <ul
-          style={{
-            margin: 0,
-            paddingLeft: '1.2em',
-            listStyleType: 'disc',
-            listStylePosition: 'outside',
-            ...style,
-          }}
-        >
+        <ul style={{ margin: 0, paddingLeft: 16, listStyle: 'none', ...style }}>
           {items.map((it, i) => (
-            <li key={i} style={{ marginBottom: tokens.space(1), paddingLeft: '0.2em' }}>
+            <li
+              key={i}
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: 6,
+                marginBottom: tokens.space(1),
+              }}
+            >
+              <span aria-hidden>•</span>
               <EditableText value={it} onChange={(text) => setItem(i, text)} />
             </li>
           ))}

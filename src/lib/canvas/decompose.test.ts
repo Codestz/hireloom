@@ -79,11 +79,13 @@ describe('decompose', () => {
     const root = decompose(doc(), tokens)
     const header = boxWithRole(root, 'header')!
     expect(header.props.direction).toBe('column')
-    const headingEl = header.children[0] as CanvasElement
+    // name + headline + contact live in an inner block
+    const inner = header.children[0] as CanvasBox
+    const headingEl = inner.children[0] as CanvasElement
     expect(headingEl.kind).toBe('heading')
     expect(headingEl.data.text).toBe('Esteban Estrada')
 
-    const contact = header.children.find((c) => isBox(c)) as CanvasBox
+    const contact = inner.children.find((c) => isBox(c)) as CanvasBox
     expect(contact.props.direction).toBe('row')
     // email · phone · location (url empty → dropped). 3 texts + 2 separators.
     expect(kinds(contact.children)).toEqual(['text', 'separator', 'text', 'separator', 'text'])

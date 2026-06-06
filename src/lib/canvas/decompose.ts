@@ -11,7 +11,7 @@
 
 import type { BlockDoc, DocSection } from '#/lib/blocks/document'
 import type { ResolvedTokens } from '#/lib/templates'
-import { makeBox, makeElement } from './model'
+import { isBox, makeBox, makeElement } from './model'
 import type {
   CanvasBox,
   CanvasElement,
@@ -171,20 +171,34 @@ export function decompose(doc: BlockDoc, t: ResolvedTokens): CanvasBox {
 
   function headerBox(): CanvasBox {
     const h = doc.header
-    const children: Array<CanvasNode> = []
+    const fs = t.baseFontSize
+    const centered = t.headerVariant === 'centered'
+    const center = centered ? ('center' as const) : undefined
+
+    // name + headline + contact live in an inner block that is centered for the
+    // 'centered' header variant (matches HeaderLayout); the summary stays left below it.
+    const inner: Array<CanvasNode> = []
     if (h.name)
-      children.push(heading(h.name, 1, { fontSize: Math.round(t.baseFontSize * 2), color: INK }))
-    if (h.headline) children.push(text(h.headline, { color: SUB }))
+      inner.push(heading(h.name, 1, { fontSize: Math.round(fs * 2), color: INK, align: center }))
+    if (h.headline)
+      inner.push(text(h.headline, { fontSize: Math.round(fs * 1.1), color: SUB, align: center }))
     const contact = inlineRow(
       t,
       [h.email, h.phone, h.url, h.location].map((v) => ({ value: str(v), style: small() })),
       'dot',
     )
-    if (contact) children.push(contact)
-    const summary = typeof h.summary === 'string' ? h.summary : ''
-    if (summary) children.push(text(summary))
+    if (contact) {
+      if (centered && isBox(contact)) contact.props.justify = 'center'
+      else if (centered && !isBox(contact)) contact.style = { ...contact.style, align: 'center' }
+      inner.push(contact)
+    }
 
-    const box = makeBox('column', { gap: t.space(2) }, children)
+    const innerBox = makeBox('column', { gap: t.space(2), align: center }, inner)
+    const children: Array<CanvasNode> = [innerBox]
+    const summary = typeof h.summary === 'string' ? h.summary : ''
+    if (summary) children.push(text(summary, { marginTop: t.space(6) }))
+
+    const box = makeBox('column', { gap: 0 }, children)
     box.role = 'header'
     return box
   }
