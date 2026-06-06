@@ -1,15 +1,6 @@
-import { useMemo, useState } from 'react'
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  pointerWithin,
-  useDraggable,
-  useDroppable,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import type { CollisionDetection, DragEndEvent, DragStartEvent } from '@dnd-kit/core'
+import { useRef, useState } from 'react'
+import { DndContext, DragOverlay, PointerSensor, useDraggable, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent, DragMoveEvent, DragStartEvent } from '@dnd-kit/core'
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -30,13 +21,11 @@ import {
 } from 'lucide-react'
 import type { ComponentType } from 'react'
 import type { useBlockDoc } from '#/components/blocks'
-import {
-  SELECT_COLOR,
-  useCanvasSelection,
-} from '#/components/blocks/canvas-tree/selection'
+import { SELECT_COLOR, useCanvasSelection } from '#/components/blocks/canvas-tree/selection'
 import { useDragState } from '#/components/blocks/canvas-tree/drag-context'
 import { isBox, isHorizontal } from '#/lib/canvas/model'
-import type { CanvasBox, CanvasNode } from '#/lib/canvas/model'
+import type { CanvasNode } from '#/lib/canvas/model'
+import { findNode, findParent } from '#/lib/canvas/tree-ops'
 import { cn } from '#/lib/utils.ts'
 
 type Controller = ReturnType<typeof useBlockDoc>
@@ -53,7 +42,7 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   button: MousePointerClickIcon,
 }
 
-function snippet(s: string, n = 26): string {
+function snippet(s: string, n = 24): string {
   const t = s.trim()
   return t.length > n ? `${t.slice(0, n)}…` : t
 }
@@ -65,8 +54,7 @@ function describe(node: CanvasNode): {
 } {
   if (isBox(node)) {
     const Icon = isHorizontal(node) ? ColumnsIcon : RowsIcon
-    const layout =
-      node.props.display === 'grid' ? 'grid' : isHorizontal(node) ? 'row' : 'column'
+    const layout = node.props.display === 'grid' ? 'grid' : isHorizontal(node) ? 'row' : 'column'
     return { Icon: node.role ? SquareIcon : Icon, label: 'Box', meta: node.role ?? layout }
   }
   const el = node
@@ -84,53 +72,44 @@ function describe(node: CanvasNode): {
   }
 }
 
-function collectContainerIds(box: CanvasBox, into: Set<string> = new Set()): Set<string> {
-  into.add(box.id)
-  for (const c of box.children) if (isBox(c)) collectContainerIds(c, into)
-  return into
+/** Where a navigator drag will land. */
+interface NavDrop {
+  activeId: string
+  container: string
+  index: number
+  /** Render the insertion line above this row id (null = at the very end). */
+  beforeId: string | null
+  indent: number
 }
 
-/** Collision over the navigator: the innermost box row under the pointer. */
-function innermostRow(containerIds: Set<string>): CollisionDetection {
-  return (args) => {
-    const hits = pointerWithin(args).filter((h) => containerIds.has(String(h.id)))
-    if (hits.length === 0) return []
-    let best = hits[0]
-    let bestArea = Infinity
-    for (const h of hits) {
-      const r = args.droppableRects.get(h.id)
-      const area = r ? r.width * r.height : Infinity
-      if (area <= bestArea) {
-        bestArea = area
-        best = h
-      }
-    }
-    return [best]
-  }
-}
+const LINE = '#6366f1'
 
-interface DragUi {
-  activeId: string | null
-  /** Container box being targeted (drop goes inside it). */
-  overId: string | null
+function InsertionLine({ indent }: { indent: number }) {
+  return <div style={{ height: 2, marginLeft: indent, background: LINE, borderRadius: 2 }} />
 }
 
 function NodeRow({
   node,
   parentId,
   depth,
+  index,
   controller,
   collapsed,
   toggle,
-  ui,
+  drop,
+  canvasActive,
+  canvasOver,
 }: {
   node: CanvasNode
   parentId: string | null
   depth: number
+  index: number
   controller: Controller
   collapsed: Set<string>
   toggle: (id: string) => void
-  ui: DragUi
+  drop: NavDrop | null
+  canvasActive: string | null
+  canvasOver: string | null
 }) {
   const { selectedId, select, hoveredId, hover } = useCanvasSelection()
   const box = isBox(node)
@@ -138,22 +117,22 @@ function NodeRow({
   const open = !collapsed.has(node.id)
   const selected = selectedId === node.id
   const highlighted = hoveredId === node.id
-  const dimmed = ui.activeId === node.id
-  const dropInto = ui.overId === node.id
+  const dimmed = drop?.activeId === node.id || canvasActive === node.id
+  const dropInto = canvasOver === node.id
   const { Icon, label, meta } = describe(node)
   const color = box ? SELECT_COLOR.box : SELECT_COLOR.element
-
   const draggable = useDraggable({ id: node.id })
-  const droppable = useDroppable({ id: node.id, disabled: !box })
-  const setRowRef = (el: HTMLElement | null) => {
-    draggable.setNodeRef(el)
-    if (box) droppable.setNodeRef(el)
-  }
 
   return (
     <>
+      {drop?.beforeId === node.id ? <InsertionLine indent={drop.indent} /> : null}
       <div
-        ref={setRowRef}
+        data-nav-id={node.id}
+        data-nav-parent={parentId ?? ''}
+        data-nav-index={index}
+        data-nav-container={box ? '1' : '0'}
+        data-nav-depth={depth}
+        ref={draggable.setNodeRef}
         className={cn(
           'group/row flex items-center gap-1 rounded-md py-1 pr-1 text-xs transition-colors',
           selected ? 'bg-primary/10 text-foreground' : highlighted ? 'bg-muted' : 'hover:bg-muted/60',
@@ -167,7 +146,6 @@ function NodeRow({
         onMouseEnter={() => hover(node.id)}
         onMouseLeave={() => hover(null)}
       >
-        {/* Drag grip */}
         {parentId ? (
           <button
             ref={draggable.setActivatorNodeRef}
@@ -224,16 +202,19 @@ function NodeRow({
       </div>
 
       {hasChildren && open
-        ? node.children.map((child) => (
+        ? node.children.map((child, i) => (
             <NodeRow
               key={child.id}
               node={child}
               parentId={node.id}
               depth={depth + 1}
+              index={i}
               controller={controller}
               collapsed={collapsed}
               toggle={toggle}
-              ui={ui}
+              drop={drop}
+              canvasActive={canvasActive}
+              canvasOver={canvasOver}
             />
           ))
         : null}
@@ -242,22 +223,19 @@ function NodeRow({
 }
 
 /**
- * Left "Build" panel: the element tree, mirroring every canvas node with per-kind icon, label,
- * and content preview, collapse/expand, delete, and TWO-WAY selection sync with the canvas.
- *
- * DnD: drag a row by its grip and drop onto any Box row to move the node INTO that box (great
- * for nesting into containers you can't easily hit on the canvas). It runs in its own
- * DndContext (isolated from the canvas one) and reflects in-progress canvas drags too — the
- * active row dims and the target box row is outlined whichever surface you drag from.
+ * Left "Build" panel: the element tree mirroring every canvas node, with two-way selection
+ * sync. DnD: drag a row by its grip and drop it at an exact slot — an insertion line shows
+ * where it lands (reorder among siblings or reparent into a box). The drop target/index is
+ * projected from the live pointer over the row rects. Reflects in-progress canvas drags too.
  */
 export function NavigatorTree({ controller }: { controller: Controller }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
-  const [navDrag, setNavDrag] = useState<DragUi>({ activeId: null, overId: null })
+  const [drop, setDrop] = useState<NavDrop | null>(null)
+  const treeRef = useRef<HTMLDivElement>(null)
+  const dropRef = useRef<NavDrop | null>(null)
   const canvasDrag = useDragState()
   const root = controller.doc.canvas
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
-  const containerIds = useMemo(() => (root ? collectContainerIds(root) : new Set<string>()), [root])
-  const collision = useMemo(() => innermostRow(containerIds), [containerIds])
 
   if (!root) return null
 
@@ -269,33 +247,89 @@ export function NavigatorTree({ controller }: { controller: Controller }) {
       return next
     })
 
-  const onDragStart = (e: DragStartEvent) =>
-    setNavDrag({ activeId: String(e.active.id), overId: null })
-
-  const onDragEnd = (e: DragEndEvent) => {
-    const active = String(e.active.id)
-    const over = e.over ? String(e.over.id) : null
-    setNavDrag({ activeId: null, overId: null })
-    if (over && containerIds.has(over) && over !== active) {
-      controller.onCanvasMoveNode(active, over) // append into the target box
-    }
+  const onDragStart = (e: DragStartEvent) => {
+    const id = String(e.active.id)
+    dropRef.current = null
+    setDrop({ activeId: id, container: root.id, index: 0, beforeId: null, indent: 16 })
   }
 
-  // Merge: navigator drag wins; otherwise reflect an in-progress canvas drag.
-  const ui: DragUi = navDrag.activeId
-    ? navDrag
-    : { activeId: canvasDrag.activeId, overId: canvasDrag.overContainerId }
+  const onDragMove = (e: DragMoveEvent) => {
+    const tree = treeRef.current
+    if (!tree) return
+    const active = String(e.active.id)
+    const a = e.activatorEvent as PointerEvent
+    const py = a.clientY + e.delta.y
+    const rows = [...tree.querySelectorAll('[data-nav-id]')].map((el) => {
+      const r = el.getBoundingClientRect()
+      return {
+        id: el.getAttribute('data-nav-id') ?? '',
+        parent: el.getAttribute('data-nav-parent') || null,
+        index: Number(el.getAttribute('data-nav-index')),
+        container: el.getAttribute('data-nav-container') === '1',
+        depth: Number(el.getAttribute('data-nav-depth')),
+        mid: r.top + r.height / 2,
+      }
+    })
+    let slot = rows.length
+    for (let i = 0; i < rows.length; i++) {
+      if (py < rows[i].mid) {
+        slot = i
+        break
+      }
+    }
+    const below = slot < rows.length ? rows[slot] : undefined
+    const above = slot > 0 ? rows[slot - 1] : undefined
+    let container: string, index: number, indent: number
+    const beforeId = below?.id ?? null
+    if (!above) {
+      container = root.id
+      index = 0
+      indent = 16
+    } else if (above.container && below && below.parent === above.id) {
+      // Right after an expanded container header → drop in as its first child.
+      container = above.id
+      index = 0
+      indent = (above.depth + 1) * 12 + 16
+    } else {
+      container = above.parent ?? root.id
+      index = above.index + 1
+      indent = above.depth * 12 + 16
+    }
+    // Never drop a box into itself or its own subtree.
+    const activeNode = findNode(root, active)
+    if (activeNode && isBox(activeNode) && (container === active || findNode(activeNode, container))) return
+    const next: NavDrop = { activeId: active, container, index, beforeId, indent }
+    dropRef.current = next
+    setDrop(next)
+  }
+
+  const onDragEnd = (_e: DragEndEvent) => {
+    const d = dropRef.current
+    const active = drop?.activeId ?? null
+    dropRef.current = null
+    setDrop(null)
+    if (!d || !active) return
+    let index = d.index
+    const parent = findParent(root, active)
+    if (parent && parent.id === d.container) {
+      const from = parent.children.findIndex((c) => c.id === active)
+      if (from >= 0 && from < index) index -= 1
+    }
+    controller.onCanvasMoveNode(active, d.container, index)
+  }
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={collision}
       onDragStart={onDragStart}
-      onDragMove={(e) => setNavDrag((s) => ({ ...s, overId: e.over ? String(e.over.id) : null }))}
+      onDragMove={onDragMove}
       onDragEnd={onDragEnd}
-      onDragCancel={() => setNavDrag({ activeId: null, overId: null })}
+      onDragCancel={() => {
+        dropRef.current = null
+        setDrop(null)
+      }}
     >
-      <div className="p-2">
+      <div ref={treeRef} className="p-2">
         <p className="px-2 pb-1 text-[10px] font-medium tracking-widest text-muted-foreground uppercase">
           Elements
         </p>
@@ -303,19 +337,23 @@ export function NavigatorTree({ controller }: { controller: Controller }) {
           node={root}
           parentId={null}
           depth={0}
+          index={0}
           controller={controller}
           collapsed={collapsed}
           toggle={toggle}
-          ui={ui}
+          drop={drop}
+          canvasActive={canvasDrag.activeId}
+          canvasOver={canvasDrag.overContainerId}
         />
+        {drop && drop.beforeId === null ? <InsertionLine indent={drop.indent} /> : null}
       </div>
       <DragOverlay dropAnimation={null}>
-        {navDrag.activeId ? (
+        {drop ? (
           <span
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              background: '#6366f1',
+              background: LINE,
               color: '#fff',
               fontSize: 11,
               padding: '2px 8px',
