@@ -1,5 +1,11 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { ResolvedTokens } from '#/lib/templates'
+import { EditableText } from '#/components/blocks/fields/editable-text'
+import { useBlockDocController } from '#/components/blocks/state/block-doc-context'
+import {
+  SELECT_COLOR,
+  useCanvasSelection,
+} from '#/components/blocks/canvas-tree/selection'
 import { isBox } from '#/lib/canvas/model'
 import type {
   CanvasBox,
@@ -103,6 +109,7 @@ function ElementView({
   el: CanvasElement
   tokens: ResolvedTokens
 }) {
+  const { onCanvasUpdateData } = useBlockDocController()
   const style = elementStyle(el.style)
   switch (el.kind) {
     case 'heading': {
@@ -119,21 +126,37 @@ function ElementView({
             ...style,
           }}
         >
-          {asText(el.data.text)}
+          <EditableText
+            value={asText(el.data.text)}
+            placeholder="Heading"
+            onChange={(text) => onCanvasUpdateData(el.id, { text })}
+          />
         </div>
       )
     }
     case 'text':
-      return <div style={{ whiteSpace: 'pre-wrap', ...style }}>{asText(el.data.text)}</div>
+      return (
+        <div style={{ whiteSpace: 'pre-wrap', ...style }}>
+          <EditableText
+            value={asText(el.data.text)}
+            placeholder="Text"
+            onChange={(text) => onCanvasUpdateData(el.id, { text })}
+          />
+        </div>
+      )
     case 'list': {
       const items = Array.isArray(el.data.items)
         ? el.data.items.filter((x): x is string => typeof x === 'string')
         : []
+      const setItem = (i: number, text: string) =>
+        onCanvasUpdateData(el.id, {
+          items: items.map((v, j) => (j === i ? text : v)),
+        })
       return (
         <ul style={{ margin: 0, paddingLeft: tokens.space(5), ...style }}>
           {items.map((it, i) => (
             <li key={i} style={{ marginBottom: tokens.space(1) }}>
-              {it}
+              <EditableText value={it} onChange={(text) => setItem(i, text)} />
             </li>
           ))}
         </ul>
@@ -193,14 +216,53 @@ function NodeView({ node, tokens }: { node: CanvasNode; tokens: ResolvedTokens }
   )
 }
 
+/**
+ * Click-to-select wrapper. Stops propagation so the innermost node wins; shows a selection
+ * outline (teal for containers, indigo for leaves). When the parent is horizontal it also
+ * carries the flex sizing (span /12) so the outline box matches the laid-out child.
+ */
+function Selectable({
+  node,
+  flex,
+  children,
+}: {
+  node: CanvasNode
+  flex?: CSSProperties
+  children: ReactNode
+}) {
+  const { selectedId, select } = useCanvasSelection()
+  const selected = selectedId === node.id
+  const color = isBox(node) ? SELECT_COLOR.box : SELECT_COLOR.element
+  return (
+    <div
+      onClick={(e) => {
+        e.stopPropagation()
+        select(node.id)
+      }}
+      style={{
+        ...flex,
+        outline: selected ? `2px solid ${color}` : undefined,
+        outlineOffset: 1,
+        borderRadius: 2,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 function BoxView({ box, tokens }: { box: CanvasBox; tokens: ResolvedTokens }) {
   const horizontal = box.props.layout === 'horizontal'
   return (
     <div style={boxStyle(box)}>
       {box.children.map((child) => (
-        <div key={child.id} style={horizontal ? childFlex(child) : undefined}>
+        <Selectable
+          key={child.id}
+          node={child}
+          flex={horizontal ? childFlex(child) : undefined}
+        >
           <NodeView node={child} tokens={tokens} />
-        </div>
+        </Selectable>
       ))}
     </div>
   )
@@ -213,5 +275,9 @@ export function CanvasRenderer({
   root: CanvasBox
   tokens: ResolvedTokens
 }) {
-  return <BoxView box={root} tokens={tokens} />
+  return (
+    <Selectable node={root}>
+      <BoxView box={root} tokens={tokens} />
+    </Selectable>
+  )
 }
