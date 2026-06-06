@@ -209,22 +209,9 @@
     0 34px 64px rgba(50, 40, 22, 0.1);
 }
 
-/* Clear "this is editable" affordances on the canvas (the page is always light).
-   Scope strictly to real editable fields (contenteditable="true") so it never
-   matches contenteditable="false" controls like the action toolbar. */
-.resume-doc [contenteditable='true'] {
-  border-radius: 3px;
-  transition:
-    background-color 0.12s,
-    box-shadow 0.12s;
-}
-.resume-doc [contenteditable='true']:hover {
-  background-color: rgba(47, 107, 79, 0.07);
-}
-.resume-doc [contenteditable='true']:focus {
-  background-color: transparent;
-  box-shadow: 0 0 0 2px rgba(47, 107, 79, 0.45);
-}
+/* (Removed the green hover/focus ring on .resume-doc [contenteditable='true']: in the canvas
+   builder the editors are inline spans, so a box-shadow ring drew per wrapped line — and the
+   Selectable outline + node chip already signal focus/selection.) */
 
 /* Block cards — calm hover tint; the margin grip + menu are drawn in block.tsx. */
 .resume-doc .hl-block {
