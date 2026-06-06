@@ -30,6 +30,7 @@ import {
   getSectionVariant,
 } from '#/components/blocks/registry/section-registry'
 import { SortableEntry } from '#/components/blocks/entry/sortable-entry'
+import { CanvasRenderer } from '#/components/blocks/canvas-tree/canvas-renderer'
 
 function headingStyle(tokens: ResolvedTokens): CSSProperties {
   return {
@@ -343,6 +344,17 @@ export function BlockDocument({
     fontFamily: tokens.fontBodyCss,
     fontSize: tokens.baseFontSize,
     color: '#404040',
+  }
+
+  // Canvas builder (WS-B, read-only): when a primitive tree is present it is the layout
+  // source of truth. Existing typed resumes have no canvas → fall through to typed rendering
+  // (zero regression). Editing/selection/DnD arrive in WS-C/D.
+  if (doc.canvas) {
+    return (
+      <div className="resume-doc" style={docStyle}>
+        <CanvasRenderer root={doc.canvas} tokens={tokens} />
+      </div>
+    )
   }
 
   if (layout === 'sidebar') {
