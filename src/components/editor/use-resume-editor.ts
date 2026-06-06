@@ -14,6 +14,7 @@ import {
 import type { ResumeRecord } from '#/lib/db'
 import { docToResume, resumeToDoc } from '#/lib/blocks/json-resume'
 import { decompose } from '#/lib/canvas/decompose'
+import { recompose } from '#/lib/canvas/recompose'
 import { createEmptyResume, downloadResumeJson } from '#/lib/resume'
 import { slugify } from '#/lib/utils.ts'
 import type { Resume } from '#/lib/resume'
@@ -103,14 +104,18 @@ export function useResumeEditor(record: ResumeRecord) {
     ]).then(() => window.location.assign('/editor'))
   }
 
+  // Export derives from the canvas (the source of truth) via recompose → typed BlockDoc, so
+  // PDF/JSON reflect canvas edits. Falls back to `doc` if there's no canvas.
+  const exportDoc = () => (doc.canvas ? recompose(doc.canvas) : doc)
+
   function exportJson() {
-    downloadResumeJson(docToResume(doc, record.data), record.title)
+    downloadResumeJson(docToResume(exportDoc(), record.data), record.title)
     toast.success('Exported JSON Resume')
   }
 
   function exportPdf() {
     const id = toast.loading('Generating PDF…')
-    downloadResumePdf(doc, resolved, `${slugify(record.title)}.pdf`, { layout })
+    downloadResumePdf(exportDoc(), resolved, `${slugify(record.title)}.pdf`, { layout })
       .then(() => toast.success('Downloaded PDF', { id }))
       .catch((e: unknown) => {
         console.error('[pdf-export]', e)
