@@ -156,6 +156,30 @@ export function tailorSummary(
   )
 }
 
+const COMPOSE_SCHEMA = `You compose a section of a résumé as a tree of layout PRIMITIVES and return ONLY JSON (no prose, no markdown fences).
+
+Node shapes:
+- Box (container): { "kind":"box", "props":{ "display":"flex", "direction":"column"|"row", "gap":<px> }, "role"?:"work"|"education"|"skills"|"projects"|"certifications"|"summary"|"custom", "children":[ ...nodes ] }
+- Heading:  { "kind":"heading", "data":{ "text":<string>, "level":1|2|3 } }
+- Text:     { "kind":"text", "data":{ "text":<string> } }
+- List:     { "kind":"list", "data":{ "items":[<string>, ...] } }
+- Separator:{ "kind":"separator", "data":{ "variant":"dot"|"dash" } }
+- Divider:  { "kind":"divider" }
+
+Conventions: a section is a Box(role) containing a Heading (level 2) then its content. For a "Title · Company" line use a row Box [ Text(bold), Separator(dot), Text ]; for dates a row Box with a dash separator. Keep everything truthful and concise; do not invent specifics that weren't given. Output a SINGLE root box.`
+
+/**
+ * Compose a résumé section as a primitive Box tree from a description. Returns the raw parsed
+ * JSON — the caller MUST run it through sanitizeAiNode (lib/canvas/ai-compose) before use.
+ */
+export async function composeBlock(request: string): Promise<unknown> {
+  const out = await promptOnce(
+    `${COMPOSE_SCHEMA}\n\nCompose this section: ${request}\n\nJSON:`,
+    CREATIVE,
+  )
+  return extractJson(out)
+}
+
 export interface ChatAction {
   kind: 'rewrite_summary' | 'add_skills' | 'rewrite_entry' | 'answer'
   /** company/role name — only for rewrite_entry */

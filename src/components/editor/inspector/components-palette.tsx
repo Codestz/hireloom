@@ -20,6 +20,7 @@ import { isBox } from '#/lib/canvas/model'
 import { findNode } from '#/lib/canvas/tree-ops'
 import { PALETTE_LABEL, makePaletteNode, paletteDragId } from '#/lib/canvas/palette'
 import type { PaletteKey } from '#/lib/canvas/palette'
+import { AiComposeField } from './ai-compose-field'
 
 type Controller = ReturnType<typeof useBlockDoc>
 
@@ -74,6 +75,8 @@ export function ComponentsPalette({ controller }: { controller: Controller }) {
 
   return (
     <div className="space-y-4 p-3">
+      <AiComposeField controller={controller} />
+
       <div className="flex items-center gap-2 rounded-md bg-muted/60 px-2.5 py-2 text-[11px] text-muted-foreground">
         <BoxSelectIcon className="size-3.5 shrink-0" />
         Drag onto the canvas, or click to add into{' '}
