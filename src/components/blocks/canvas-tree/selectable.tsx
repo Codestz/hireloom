@@ -1,11 +1,15 @@
+import { useContext } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { GripVerticalIcon } from 'lucide-react'
 import { isBox } from '#/lib/canvas/model'
 import type { CanvasNode } from '#/lib/canvas/model'
+import { AiTextMenu } from '#/components/blocks/ai/ai-text-menu'
+import { AiEnabledContext } from '#/components/blocks/ai/ai-context'
+import { useBlockDocController } from '#/components/blocks/state/block-doc-context'
 import { SELECT_COLOR, useCanvasSelection } from './selection'
 import { useDragState } from './drag-context'
-import { KIND_LABEL } from './node-style'
+import { KIND_LABEL, asText } from './node-style'
 
 /**
  * The node chip: one coherent affordance pinned to the node's top-left edge (color-matched —
@@ -32,6 +36,10 @@ function NodeChip({
   gripListeners: Record<string, unknown> | undefined
   gripAttributes: Record<string, unknown>
 }) {
+  const { onCanvasUpdateData } = useBlockDocController()
+  const aiEnabled = useContext(AiEnabledContext)
+  const canAi = aiEnabled && !isBox(node) && (node.kind === 'heading' || node.kind === 'text')
+  const elText = isBox(node) ? '' : asText(node.data.text)
   return (
     <span
       contentEditable={false}
@@ -43,12 +51,12 @@ function NodeChip({
         zoom: 'var(--chrome-zoom, 1)' as unknown as number,
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 3,
+        gap: 4,
         background: color,
         color: '#fff',
-        fontSize: 9,
-        lineHeight: 1.4,
-        padding: '1px 4px',
+        fontSize: 10,
+        lineHeight: 1.5,
+        padding: '2px 5px',
         borderRadius: 4,
         boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
         fontFamily: 'ui-sans-serif, system-ui, sans-serif',
@@ -105,6 +113,15 @@ function NodeChip({
               ↑
             </button>
           ) : null}
+          {canAi ? (
+            <span onClick={(e) => e.stopPropagation()} style={{ display: 'inline-flex' }}>
+              <AiTextMenu
+                getText={() => elText}
+                onApply={(text) => onCanvasUpdateData(node.id, { text })}
+                triggerClassName="flex size-4 items-center justify-center rounded text-white hover:bg-white/25 data-[state=open]:bg-white/25"
+              />
+            </span>
+          ) : null}
         </>
       ) : null}
     </span>
@@ -149,6 +166,7 @@ export function Selectable({
     <div
       ref={setNodeRef}
       data-node-id={node.id}
+      data-ai-row
       onClick={(e) => {
         e.stopPropagation()
         select(node.id)
