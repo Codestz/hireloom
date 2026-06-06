@@ -5,12 +5,12 @@ import type { useBlockDoc } from '#/components/blocks'
 import { Button } from '#/components/ui/button'
 import { chatBuildCanvas } from '#/lib/ai/service'
 import { useAiReady } from '#/lib/ai/use-ai-ready'
-import { applyChatOps, canvasOutline } from '#/lib/canvas/chat-ops'
+import { applyChatOps, canvasOutline, sectionTemplates } from '#/lib/canvas/chat-ops'
 import type { ChatOp } from '#/lib/canvas/chat-ops'
 import { cn } from '#/lib/utils.ts'
 
 /**
- * The CV Chat — talk to your résumé. The model reads a compact outline of the canvas and
+ * The CV Chat — talk to your resume. The model reads a compact outline of the canvas and
  * returns a reply plus structured ops (add a section / edit a node / remove). Ops are shown as
  * a preview you Apply or Discard — the model never mutates the document directly. Applying runs
  * through applyChatOps (which sanitizes any AI-generated subtree). Cloud Gemini recommended.
@@ -41,7 +41,7 @@ function loadMessages(): Array<Message> {
 const SUGGESTIONS = [
   'Add a Projects section',
   'Add a certifications section for AWS and GCP',
-  'What’s missing from my résumé?',
+  'What’s missing from my resume?',
 ]
 
 export function AiChatPanel({ controller }: { controller: Controller }) {
@@ -75,6 +75,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
       const res = await chatBuildCanvas(
         [...history, { role: 'user', text: msg }],
         root ? canvasOutline(root) : '(empty document)',
+        root ? sectionTemplates(root) : '',
       )
       // Dry-run to preview what would change (without mutating).
       const summary = root && res.ops.length ? applyChatOps(root, res.ops).summary : []
@@ -104,7 +105,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
     if (!root) return
     controller.onSetCanvasRoot(applyChatOps(root, ops).root)
     setMessages((m) => m.map((x, i) => (i === index ? { ...x, applied: true } : x)))
-    toast.success('Applied to your résumé')
+    toast.success('Applied to your resume')
   }
 
   if (!aiReady) {

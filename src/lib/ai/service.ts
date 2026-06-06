@@ -135,7 +135,7 @@ export async function structureResumeJson(
 {"basics":{"name":"","label":"job title","email":"","phone":"","url":"","summary":"","location":{"city":""}},"work":[{"name":"company","position":"title","startDate":"","endDate":"","highlights":["bullet","bullet"]}],"education":[{"institution":"","studyType":"degree","area":"field","startDate":"","endDate":""}],"skills":[{"name":""}]}
 Rules: use ONLY information present in the text; omit any field you cannot fill. Put each achievement/bullet as its own highlight string. Keep dates as written.
 
-RÉSUMÉ TEXT:
+resume TEXT:
 ${text.slice(0, 6000)}
 
 JSON:`
@@ -152,12 +152,12 @@ export function tailorSummary(
   onChunk: (partial: string) => void,
 ): Promise<string> {
   return streamPrompt(
-    `Rewrite the candidate's professional resume summary to target the job below. Naturally adopt the job's key terminology WHERE the candidate's real experience already supports it — never claim a skill or experience not present in the resume. 2-3 sentences, implied first person (no "I"/"my"). Respond with ONLY the summary text.\n\nJOB DESCRIPTION:\n${jd.slice(0, 1500)}\n\nRÉSUMÉ:\n${resume.slice(0, 2500)}`,
+    `Rewrite the candidate's professional resume summary to target the job below. Naturally adopt the job's key terminology WHERE the candidate's real experience already supports it — never claim a skill or experience not present in the resume. 2-3 sentences, implied first person (no "I"/"my"). Respond with ONLY the summary text.\n\nJOB DESCRIPTION:\n${jd.slice(0, 1500)}\n\nresume:\n${resume.slice(0, 2500)}`,
     onChunk,
   )
 }
 
-const COMPOSE_SCHEMA = `You compose a section of a résumé as a tree of layout PRIMITIVES and return ONLY JSON (no prose, no markdown fences).
+const COMPOSE_SCHEMA = `You compose a section of a resume as a tree of layout PRIMITIVES and return ONLY JSON (no prose, no markdown fences).
 
 Node shapes:
 - Box (container): { "kind":"box", "props":{ "display":"flex", "direction":"column"|"row", "gap":<px> }, "role"?:"work"|"education"|"skills"|"projects"|"certifications"|"summary"|"custom", "children":[ ...nodes ] }
@@ -170,7 +170,7 @@ Node shapes:
 Conventions: a section is a Box(role) containing a Heading (level 2) then its content. For a "Title · Company" line use a row Box [ Text(bold), Separator(dot), Text ]; for dates a row Box with a dash separator. Keep everything truthful and concise; do not invent specifics that weren't given. Output a SINGLE root box.`
 
 /**
- * Compose a résumé section as a primitive Box tree from a description. Returns the raw parsed
+ * Compose a resume section as a primitive Box tree from a description. Returns the raw parsed
  * JSON — the caller MUST run it through sanitizeAiNode (lib/canvas/ai-compose) before use.
  */
 export async function composeBlock(request: string): Promise<unknown> {
@@ -181,7 +181,7 @@ export async function composeBlock(request: string): Promise<unknown> {
   return extractJson(out)
 }
 
-const CHAT_SCHEMA = `You help edit a résumé built as a tree of layout primitives. You are given a compact OUTLINE of the current document — each line shows a node's kind, a role/heading/text preview, and its id in (parentheses). Use those ids to target edits.
+const CHAT_SCHEMA = `You help edit a resume built as a tree of layout primitives. You are given a compact OUTLINE of the current document — each line shows a node's kind, a role/heading/text preview, and its id in (parentheses). Use those ids to target edits.
 
 Reply conversationally in "reply". When the user asks for a concrete change, also return "ops" to apply it. If the request is ambiguous or missing specifics, ASK in "reply" and return "ops": [] — never invent facts.
 
@@ -198,7 +198,7 @@ Primitive subtree (for "add"):
 - Text: { "kind":"text","data":{ "text":<string> } }
 - List: { "kind":"list","data":{ "items":[<string>,...] } }
 - Separator: { "kind":"separator","data":{ "variant":"dot"|"dash" } }   Divider: { "kind":"divider" }
-A new section = Box(role) with a Heading (level 2) then its content.`
+A new section = Box(role) with a Heading (level 2) then its content. When adding an item to an EXISTING section, COPY that section's entry template (shown below) exactly — same box nesting, separators, and heading levels — changing only the text. Set "target" to the section's role (e.g. "certifications").`
 
 export interface ChatResult {
   reply: string
@@ -213,10 +213,14 @@ export interface ChatResult {
 export async function chatBuildCanvas(
   history: ReadonlyArray<{ role: 'user' | 'assistant'; text: string }>,
   outline: string,
+  templates = '',
 ): Promise<ChatResult> {
   const convo = history.map((m) => `${m.role.toUpperCase()}: ${m.text}`).join('\n')
+  const tmpl = templates.trim()
+    ? `\n\nEXISTING ENTRY TEMPLATES — mirror these structures when adding a similar item:\n${templates}`
+    : ''
   const out = await promptOnce(
-    `${CHAT_SCHEMA}\n\nDOCUMENT OUTLINE:\n${outline}\n\nCONVERSATION:\n${convo}\nASSISTANT (JSON only):`,
+    `${CHAT_SCHEMA}\n\nDOCUMENT OUTLINE:\n${outline}${tmpl}\n\nCONVERSATION:\n${convo}\nASSISTANT (JSON only):`,
     CREATIVE,
   )
   const parsed = extractJson<{ reply?: unknown; ops?: unknown }>(out)
@@ -257,7 +261,7 @@ Content rules by kind:
 
 Be truthful — use only what's in the resume; never invent employers, dates, or facts. Only change what the user asked for.
 
-RÉSUMÉ:
+resume:
 ${context.slice(0, 4000)}
 
 USER REQUEST: ${message}

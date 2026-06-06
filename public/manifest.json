@@ -2,7 +2,7 @@
   "id": "/",
   "short_name": "HireLoom",
   "name": "HireLoom — Private CV Builder",
-  "description": "A private, local-first CV builder. Your résumé is a file you own.",
+  "description": "A private, local-first CV builder. Your resume is a file you own.",
   "icons": [
     {
       "src": "favicon.ico",
