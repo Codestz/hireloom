@@ -21,6 +21,7 @@ import { DesignPanel } from '#/components/editor/panels/design-panel'
 import { cn } from '#/lib/utils.ts'
 import type { useBlockDoc } from '#/components/blocks'
 import { TreePanel } from './structure-tree'
+import { NavigatorTree } from './navigator-tree'
 
 type Mode = 'build' | 'design' | 'ai' | 'chat' | 'ats' | 'export'
 type Controller = ReturnType<typeof useBlockDoc>
@@ -51,12 +52,17 @@ const MODES: Array<SidebarMode> = [
     key: 'build',
     label: 'Build',
     icon: LayersIcon,
-    render: (c) => (
-      <TreePanel
-        controller={c.controller}
-        availableSections={c.availableSections}
-      />
-    ),
+    // Canvas mode → the element Navigator (mirrors the node tree); otherwise the typed
+    // section tree. They share CanvasSelectionContext, so navigator ↔ canvas selection syncs.
+    render: (c) =>
+      c.controller.doc.canvas ? (
+        <NavigatorTree controller={c.controller} />
+      ) : (
+        <TreePanel
+          controller={c.controller}
+          availableSections={c.availableSections}
+        />
+      ),
   },
   {
     key: 'design',
