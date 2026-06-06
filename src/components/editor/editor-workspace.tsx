@@ -7,6 +7,7 @@ import { ImportDialog } from '#/components/editor/dialogs/import-dialog'
 import { InspectorPanel } from '#/components/editor/inspector/inspector-panel'
 import { CanvasSelectionProvider } from '#/components/blocks/canvas-tree/selection'
 import { CanvasDndProvider } from '#/components/blocks/canvas-tree/canvas-dnd'
+import { CanvasKeyboard } from '#/components/blocks/canvas-tree/canvas-keyboard'
 import { MobileGate } from './mobile-gate'
 import { useResumeEditor } from './use-resume-editor'
 
@@ -38,6 +39,7 @@ export function EditorWorkspace({ record, autoImport }: EditorWorkspaceProps) {
         />
 
         <CanvasSelectionProvider>
+         {canvasMode ? <CanvasKeyboard controller={editor.controller} /> : null}
          <CanvasDndProvider controller={editor.controller}>
           <div className="flex flex-1 overflow-hidden print:block print:overflow-visible">
             <aside className="hidden w-[340px] shrink-0 border-r border-border md:block print:hidden">

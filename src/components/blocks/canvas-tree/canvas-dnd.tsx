@@ -109,8 +109,15 @@ export function CanvasDndProvider({
     return i
   }
 
-  const onDragStart = (e: DragStartEvent) =>
+  const setDragCursor = (on: boolean) => {
+    document.body.style.cursor = on ? 'grabbing' : ''
+    document.body.style.userSelect = on ? 'none' : ''
+  }
+
+  const onDragStart = (e: DragStartEvent) => {
+    setDragCursor(true)
     setState({ activeId: String(e.active.id), overContainerId: null, dropIndex: null })
+  }
 
   const onDragMove = (e: DragMoveEvent) => {
     const over = e.over?.id ? String(e.over.id) : null
@@ -125,6 +132,7 @@ export function CanvasDndProvider({
   }
 
   const onDragEnd = (_e: DragEndEvent) => {
+    setDragCursor(false)
     const active = state.activeId
     const drop = dropRef.current
     dropRef.current = null
@@ -165,6 +173,7 @@ export function CanvasDndProvider({
       onDragMove={onDragMove}
       onDragEnd={onDragEnd}
       onDragCancel={() => {
+        setDragCursor(false)
         dropRef.current = null
         setState(EMPTY)
       }}
