@@ -4,7 +4,6 @@ import {
   FileTextIcon,
   LayersIcon,
   MessageSquareIcon,
-  PaletteIcon,
   ShieldCheckIcon,
   SparklesIcon,
   TargetIcon,
@@ -17,13 +16,12 @@ import { StartOverDialog } from '#/components/editor/dialogs/start-over-dialog'
 import { AiChatPanel } from '#/components/editor/panels/ai-chat-panel'
 import { AiStudioPanel } from '#/components/editor/panels/ai-studio-panel'
 import { AtsPanel } from '#/components/editor/panels/ats-panel'
-import { DesignPanel } from '#/components/editor/panels/design-panel'
 import { cn } from '#/lib/utils.ts'
 import type { useBlockDoc } from '#/components/blocks'
 import { TreePanel } from './structure-tree'
 import { NavigatorTree } from './navigator-tree'
 
-type Mode = 'build' | 'design' | 'ai' | 'chat' | 'ats' | 'export'
+type Mode = 'build' | 'ai' | 'chat' | 'ats' | 'export'
 type Controller = ReturnType<typeof useBlockDoc>
 
 /** Everything a sidebar panel might need — passed to each mode's `render`. */
@@ -63,19 +61,6 @@ const MODES: Array<SidebarMode> = [
           availableSections={c.availableSections}
         />
       ),
-  },
-  {
-    key: 'design',
-    label: 'Design',
-    icon: PaletteIcon,
-    render: (c) => (
-      <DesignPanel
-        tokens={c.tokens}
-        activeTemplate={c.activeTemplate}
-        onChange={c.onTokensChange}
-        onApplyTemplate={c.onApplyTemplate}
-      />
-    ),
   },
   {
     key: 'ai',
