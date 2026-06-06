@@ -8,8 +8,6 @@ import type { TextAction } from '#/lib/ai/service'
 import { headerBlock } from '#/lib/blocks/defs/header'
 import type { BlockDoc } from '#/lib/blocks/document'
 import { getSection } from '#/lib/blocks/sections'
-import { decompose } from '#/lib/canvas/decompose'
-import type { ResolvedTokens } from '#/lib/templates'
 import type { BoxProps, CanvasBox, CanvasElement, CanvasNode } from '#/lib/canvas/model'
 import {
   addChild,
@@ -400,26 +398,6 @@ export function useBlockDoc(initial: BlockDoc) {
     [bump],
   )
 
-  // Canvas builder mode: presence of `doc.canvas` IS the mode (renderer branches on it).
-  // Enabling synthesizes a primitive tree from the current typed sections (migration);
-  // disabling drops back to the typed editor. Autosave persists it via meta.hireloom.canvas.
-  const onEnableCanvas = useCallback(
-    (tokens: ResolvedTokens) => {
-      setDoc((d) => (d.canvas ? d : { ...d, canvas: decompose(d, tokens) }))
-      bump()
-    },
-    [bump],
-  )
-
-  const onDisableCanvas = useCallback(() => {
-    setDoc((d) => {
-      if (!d.canvas) return d
-      const { canvas: _drop, ...rest } = d
-      return rest
-    })
-    bump()
-  }, [bump])
-
   // ── Canvas builder mutations (operate on doc.canvas via pure tree-ops) ──────────────────
   // Text/data edits do NOT bump (EditableText is uncontrolled — bumping drops the caret);
   // structural/style/prop changes bump so the keyed canvas re-syncs.
@@ -548,7 +526,7 @@ export function useBlockDoc(initial: BlockDoc) {
     ],
   )
 
-  return { doc, rev, bump, actions, onEnableCanvas, onDisableCanvas, ...actions }
+  return { doc, rev, bump, actions, ...actions }
 }
 
 function makeSectionId(type: string): string {

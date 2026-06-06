@@ -13,6 +13,7 @@ import {
 } from '#/lib/db'
 import type { ResumeRecord } from '#/lib/db'
 import { docToResume, resumeToDoc } from '#/lib/blocks/json-resume'
+import { decompose } from '#/lib/canvas/decompose'
 import { createEmptyResume, downloadResumeJson } from '#/lib/resume'
 import { slugify } from '#/lib/utils.ts'
 import type { Resume } from '#/lib/resume'
@@ -28,8 +29,14 @@ const AUTOSAVE_MS = 600
  * pure view. All persistence goes through the `lib/db` hooks (no raw Dexie in components).
  */
 export function useResumeEditor(record: ResumeRecord) {
-  // The editable document is built once from the loaded resume.
-  const initialDoc = useMemo(() => resumeToDoc(record.data), [record.data])
+  // The editable document is built once from the loaded resume. Builder is the editor now:
+  // if the resume has no persisted canvas yet, synthesize one from its typed sections so it
+  // opens straight into the canvas. (Export/ATS still read `sections` until canvas→export
+  // lands — see the staged cutover plan.)
+  const initialDoc = useMemo(() => {
+    const d = resumeToDoc(record.data)
+    return d.canvas ? d : { ...d, canvas: decompose(d, resolveTokens(record.tokens)) }
+  }, [record.data, record.tokens])
   const controller = useBlockDoc(initialDoc)
   const { doc } = controller
 
