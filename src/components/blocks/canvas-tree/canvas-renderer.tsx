@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import type { ResolvedTokens } from '#/lib/templates'
 import { EditableText } from '#/components/blocks/fields/editable-text'
@@ -223,10 +224,24 @@ function NodeView({ node, tokens }: { node: CanvasNode; tokens: ResolvedTokens }
   )
 }
 
+const KIND_LABEL: Record<string, string> = {
+  box: 'Box',
+  heading: 'Heading',
+  text: 'Text',
+  list: 'List',
+  separator: 'Separator',
+  divider: 'Divider',
+  spacer: 'Spacer',
+  image: 'Image',
+  icon: 'Icon',
+  button: 'Button',
+}
+
 /**
- * Click-to-select wrapper. Stops propagation so the innermost node wins; shows a selection
- * outline (teal for containers, indigo for leaves). When the parent is horizontal it also
- * carries the flex sizing (span /12) so the outline box matches the laid-out child.
+ * Click-to-select wrapper. Stops propagation so the innermost node wins. Visual language to
+ * tell containers from leaves at a glance: a Box gets a DASHED teal outline, a leaf element a
+ * SOLID indigo one. Hover shows a faint preview of that outline; selection shows it bold plus
+ * a small type badge. Carries flex sizing (span /12) when the parent is a row.
  */
 function Selectable({
   node,
@@ -238,21 +253,57 @@ function Selectable({
   children: ReactNode
 }) {
   const { selectedId, select } = useCanvasSelection()
+  const [hovered, setHovered] = useState(false)
   const selected = selectedId === node.id
-  const color = isBox(node) ? SELECT_COLOR.box : SELECT_COLOR.element
+  const box = isBox(node)
+  const color = box ? SELECT_COLOR.box : SELECT_COLOR.element
+  const lineStyle = box ? 'dashed' : 'solid'
+  const outline = selected
+    ? `2px ${lineStyle} ${color}`
+    : hovered
+      ? `1px ${lineStyle} ${color}80`
+      : undefined
   return (
     <div
       onClick={(e) => {
         e.stopPropagation()
         select(node.id)
       }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         ...flex,
-        outline: selected ? `2px solid ${color}` : undefined,
-        outlineOffset: 1,
+        position: 'relative',
+        outline,
+        outlineOffset: box ? 2 : 1,
         borderRadius: 2,
       }}
     >
+      {selected ? (
+        <span
+          contentEditable={false}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            transform: 'translateY(-100%)',
+            zoom: 'var(--chrome-zoom, 1)' as unknown as number,
+            background: color,
+            color: '#fff',
+            fontSize: 9,
+            lineHeight: 1.4,
+            padding: '1px 5px',
+            borderRadius: 3,
+            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+            letterSpacing: 0.3,
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            zIndex: 10,
+          }}
+        >
+          {KIND_LABEL[node.kind] ?? node.kind}
+        </span>
+      ) : null}
       {children}
     </div>
   )
