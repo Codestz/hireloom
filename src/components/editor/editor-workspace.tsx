@@ -6,6 +6,7 @@ import { EditorSidebar } from '#/components/editor/sidebar/editor-sidebar'
 import { ImportDialog } from '#/components/editor/dialogs/import-dialog'
 import { InspectorPanel } from '#/components/editor/inspector/inspector-panel'
 import { CanvasSelectionProvider } from '#/components/blocks/canvas-tree/selection'
+import { CanvasDndProvider } from '#/components/blocks/canvas-tree/canvas-dnd'
 import { MobileGate } from './mobile-gate'
 import { useResumeEditor } from './use-resume-editor'
 
@@ -37,6 +38,7 @@ export function EditorWorkspace({ record, autoImport }: EditorWorkspaceProps) {
         />
 
         <CanvasSelectionProvider>
+         <CanvasDndProvider controller={editor.controller}>
           <div className="flex flex-1 overflow-hidden print:block print:overflow-visible">
             <aside className="hidden w-[340px] shrink-0 border-r border-border md:block print:hidden">
               <EditorSidebar
@@ -67,6 +69,7 @@ export function EditorWorkspace({ record, autoImport }: EditorWorkspaceProps) {
               </aside>
             ) : null}
           </div>
+         </CanvasDndProvider>
         </CanvasSelectionProvider>
       </div>
     </>

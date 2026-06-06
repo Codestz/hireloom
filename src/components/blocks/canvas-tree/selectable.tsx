@@ -1,7 +1,10 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { useDraggable } from '@dnd-kit/core'
+import { GripVerticalIcon } from 'lucide-react'
 import { isBox } from '#/lib/canvas/model'
 import type { CanvasNode } from '#/lib/canvas/model'
 import { SELECT_COLOR, useCanvasSelection } from './selection'
+import { useDragState } from './drag-context'
 import { KIND_LABEL } from './node-style'
 
 /** The little type chip above a selected node, with a ↑ "select parent" button. */
@@ -68,10 +71,11 @@ function SelectionBadge({
 }
 
 /**
- * Click-to-select wrapper. Stops propagation so the innermost node wins. Visual language to
- * tell containers from leaves at a glance: a Box gets a DASHED teal outline, a leaf element a
- * SOLID indigo one. Hover shows a faint preview; selection shows it bold plus the type badge.
- * Carries flex sizing (span /12) when the parent is a row.
+ * Click-to-select + drag-handle wrapper. Selection language: a Box gets a DASHED teal outline,
+ * a leaf a SOLID indigo one (faint on hover, bold + badge on select). Dragging is initiated
+ * only from the grip in the gutter (so inline text editing is never hijacked); the dragged
+ * node dims while a drop line elsewhere shows where it'll land. Carries flex sizing (span /12)
+ * when the parent is a row.
  */
 export function Selectable({
   node,
@@ -85,8 +89,13 @@ export function Selectable({
   children: ReactNode
 }) {
   const { selectedId, select, hoveredId, hover } = useCanvasSelection()
+  const drag = useDragState()
+  const { setNodeRef, setActivatorNodeRef, listeners, attributes } = useDraggable({
+    id: node.id,
+  })
   const selected = selectedId === node.id
   const hovered = hoveredId === node.id && !selected
+  const dragging = drag.activeId === node.id
   const box = isBox(node)
   const color = box ? SELECT_COLOR.box : SELECT_COLOR.element
   const lineStyle = box ? 'dashed' : 'solid'
@@ -95,14 +104,15 @@ export function Selectable({
     : hovered
       ? `1px ${lineStyle} ${color}80`
       : undefined
+
   return (
     <div
+      ref={setNodeRef}
+      data-node-id={node.id}
       onClick={(e) => {
         e.stopPropagation()
         select(node.id)
       }}
-      // onMouseOver bubbles, so the innermost node's handler fires first; stopPropagation
-      // then prevents ancestors from also marking themselves hovered (no nested noise).
       onMouseOver={(e) => {
         e.stopPropagation()
         hover(node.id)
@@ -113,11 +123,44 @@ export function Selectable({
         outline,
         outlineOffset: box ? 2 : 1,
         borderRadius: 2,
+        opacity: dragging ? 0.4 : undefined,
       }}
     >
       {selected ? (
         <SelectionBadge node={node} parentId={parentId} color={color} onSelectParent={select} />
       ) : null}
+
+      {/* Drag grip — only non-root nodes; appears in the gutter on hover/selection. */}
+      {parentId ? (
+        <button
+          ref={setActivatorNodeRef}
+          {...listeners}
+          {...attributes}
+          aria-label="Drag to move"
+          title="Drag to move"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute',
+            left: -18,
+            top: 1,
+            zoom: 'var(--chrome-zoom, 1)' as unknown as number,
+            cursor: 'grab',
+            display: 'inline-flex',
+            padding: 1,
+            borderRadius: 3,
+            border: `1px solid ${color}`,
+            background: '#fff',
+            color,
+            opacity: hovered || selected ? 1 : 0,
+            transition: 'opacity 120ms',
+            zIndex: 11,
+            touchAction: 'none',
+          }}
+        >
+          <GripVerticalIcon style={{ width: 11, height: 11 }} />
+        </button>
+      ) : null}
+
       {children}
     </div>
   )
