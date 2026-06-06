@@ -110,7 +110,7 @@ export function BlockCanvas({
           onClick={() =>
             canvasMode
               ? controller.onDisableCanvas()
-              : controller.onEnableCanvas()
+              : controller.onEnableCanvas(tokens)
           }
           className={
             canvasMode

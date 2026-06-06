@@ -17,7 +17,7 @@ const BoxPropsSchema = z
     gap: z.number().optional(),
     pad: z.number().optional(),
     margin: z.number().optional(),
-    align: z.enum(['start', 'center', 'end', 'stretch']).optional(),
+    align: z.enum(['start', 'center', 'end', 'stretch', 'baseline']).optional(),
     justify: z.enum(['start', 'center', 'end', 'between', 'around']).optional(),
     wrap: z.boolean().optional(),
     bg: z.string().optional(),

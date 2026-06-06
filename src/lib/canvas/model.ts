@@ -31,7 +31,7 @@ export type ElementKind =
 /** The glyph a standalone `separator` element draws between two siblings. */
 export type SeparatorVariant = 'dot' | 'line' | 'dash' | 'slash' | 'pipe' | 'bullet'
 
-export type BoxAlign = 'start' | 'center' | 'end' | 'stretch'
+export type BoxAlign = 'start' | 'center' | 'end' | 'stretch' | 'baseline'
 export type BoxJustify = 'start' | 'center' | 'end' | 'between' | 'around'
 export type TextAlign = 'left' | 'center' | 'right' | 'justify'
 

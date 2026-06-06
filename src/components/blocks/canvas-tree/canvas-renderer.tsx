@@ -160,9 +160,17 @@ function ElementView({
           items: items.map((v, j) => (j === i ? text : v)),
         })
       return (
-        <ul style={{ margin: 0, paddingLeft: tokens.space(5), ...style }}>
+        <ul
+          style={{
+            margin: 0,
+            paddingLeft: '1.2em',
+            listStyleType: 'disc',
+            listStylePosition: 'outside',
+            ...style,
+          }}
+        >
           {items.map((it, i) => (
-            <li key={i} style={{ marginBottom: tokens.space(1) }}>
+            <li key={i} style={{ marginBottom: tokens.space(1), paddingLeft: '0.2em' }}>
               <EditableText value={it} onChange={(text) => setItem(i, text)} />
             </li>
           ))}

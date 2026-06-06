@@ -9,6 +9,7 @@ import { headerBlock } from '#/lib/blocks/defs/header'
 import type { BlockDoc } from '#/lib/blocks/document'
 import { getSection } from '#/lib/blocks/sections'
 import { decompose } from '#/lib/canvas/decompose'
+import type { ResolvedTokens } from '#/lib/templates'
 import type { BoxProps, CanvasBox, CanvasElement, CanvasNode } from '#/lib/canvas/model'
 import {
   addChild,
@@ -402,10 +403,13 @@ export function useBlockDoc(initial: BlockDoc) {
   // Canvas builder mode: presence of `doc.canvas` IS the mode (renderer branches on it).
   // Enabling synthesizes a primitive tree from the current typed sections (migration);
   // disabling drops back to the typed editor. Autosave persists it via meta.hireloom.canvas.
-  const onEnableCanvas = useCallback(() => {
-    setDoc((d) => (d.canvas ? d : { ...d, canvas: decompose(d) }))
-    bump()
-  }, [bump])
+  const onEnableCanvas = useCallback(
+    (tokens: ResolvedTokens) => {
+      setDoc((d) => (d.canvas ? d : { ...d, canvas: decompose(d, tokens) }))
+      bump()
+    },
+    [bump],
+  )
 
   const onDisableCanvas = useCallback(() => {
     setDoc((d) => {

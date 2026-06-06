@@ -1,9 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import type { BlockDoc } from '#/lib/blocks/document'
+import type { ResolvedTokens } from '#/lib/templates'
 import { decompose } from './decompose'
-import { isBox    } from './model'
-import type {CanvasBox, CanvasElement, CanvasNode} from './model';
+import { isBox } from './model'
+import type { CanvasBox, CanvasElement, CanvasNode } from './model'
 import { CanvasSchema } from './schema'
+
+const tokens: ResolvedTokens = {
+  accent: '#2f6b4f',
+  fontHeadingCss: 'serif',
+  fontBodyCss: 'sans-serif',
+  fontHeadingPdf: 'Times',
+  fontBodyPdf: 'Helvetica',
+  baseFontSize: 10,
+  headerVariant: 'standard',
+  space: (n) => n,
+}
 
 function doc(): BlockDoc {
   return {
@@ -60,11 +72,11 @@ const txt = (n: CanvasNode) => (n as CanvasElement).data.text
 
 describe('decompose', () => {
   it('produces a schema-valid root box', () => {
-    expect(() => CanvasSchema.parse(decompose(doc()))).not.toThrow()
+    expect(() => CanvasSchema.parse(decompose(doc(), tokens))).not.toThrow()
   })
 
   it('header: name→heading, contact→horizontal box of Text·Separator·Text (literal separators)', () => {
-    const root = decompose(doc())
+    const root = decompose(doc(), tokens)
     const header = boxWithRole(root, 'header')!
     expect(header.props.direction).toBe('column')
     const headingEl = header.children[0] as CanvasElement
@@ -78,36 +90,35 @@ describe('decompose', () => {
     expect(contact.children.map(txt).filter(Boolean)).toEqual(['a@b.com', '+57 1', 'Medellín'])
   })
 
-  it('experience: section box has role, heading, divider, and an entry box per item', () => {
-    const root = decompose(doc())
+  it('experience: section box (role) → header sub-box {heading,divider} + an entry per item', () => {
+    const root = decompose(doc(), tokens)
     const work = boxWithRole(root, 'experience')!
-    expect(work.children[0].kind).toBe('heading')
-    expect((work.children[0] as CanvasElement).data.text).toBe('WORK HISTORY')
-    expect(work.children[1].kind).toBe('divider')
-    const entry = work.children[2] as CanvasBox
+    const secHeader = work.children[0] as CanvasBox
+    expect(kinds(secHeader.children)).toEqual(['heading', 'divider'])
+    expect((secHeader.children[0] as CanvasElement).data.text).toBe('WORK HISTORY')
+
+    const entry = work.children[1] as CanvasBox
     expect(isBox(entry)).toBe(true)
 
-    // title·company line is a horizontal box with a literal dot separator
-    const titleLine = entry.children[0] as CanvasBox
-    expect(kinds(titleLine.children)).toEqual(['text', 'separator', 'text'])
-    expect((titleLine.children[1] as CanvasElement).data.variant).toBe('dot')
+    // classic head row: title·company on the left (dot), period on the right (dash)
+    const headRow = entry.children[0] as CanvasBox
+    expect(headRow.props.justify).toBe('between')
+    const left = headRow.children[0] as CanvasBox
+    expect(kinds(left.children)).toEqual(['text', 'separator', 'text'])
+    expect((left.children[1] as CanvasElement).data.variant).toBe('dot')
+    const period = headRow.children[1] as CanvasBox
+    expect((period.children[1] as CanvasElement).data.variant).toBe('dash')
 
-    // date line uses a dash separator
-    const dateLine = entry.children[1] as CanvasBox
-    expect((dateLine.children[1] as CanvasElement).data.variant).toBe('dash')
-
-    // each bullet became its own Text
-    const bulletTexts = entry.children.filter(
-      (c) => c.kind === 'text' && ['Led X', 'Built Y'].includes(String((c).data.text)),
-    )
-    expect(bulletTexts).toHaveLength(2)
+    // bullets render as a single List (granular per line, bulleted look)
+    const list = entry.children.find((c) => c.kind === 'list') as CanvasElement
+    expect(list.data.items).toEqual(['Led X', 'Built Y'])
   })
 
-  it('skills: section box → heading + divider + a single List of the tags', () => {
-    const root = decompose(doc())
+  it('skills: section box → header sub-box + a single List of the tags', () => {
+    const root = decompose(doc(), tokens)
     const skills = boxWithRole(root, 'skills')!
-    expect(kinds(skills.children)).toEqual(['heading', 'divider', 'list'])
-    expect((skills.children[2] as CanvasElement).data.items).toEqual(['TypeScript', 'Go'])
+    expect(kinds(skills.children)).toEqual(['box', 'list'])
+    expect((skills.children[1] as CanvasElement).data.items).toEqual(['TypeScript', 'Go'])
   })
 
   it('every node has a unique id', () => {
@@ -116,7 +127,7 @@ describe('decompose', () => {
       ids.push(n.id)
       if (isBox(n)) n.children.forEach(walk)
     }
-    walk(decompose(doc()))
+    walk(decompose(doc(), tokens))
     expect(new Set(ids).size).toBe(ids.length)
   })
 })
