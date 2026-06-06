@@ -1,4 +1,5 @@
 import type { HeaderData } from './defs/header'
+import type { CanvasBox } from '#/lib/canvas/model'
 
 /**
  * The in-editor document model. This is the canonical shape the editor manipulates and
@@ -27,4 +28,10 @@ export interface DocSection {
 export interface BlockDoc {
   header: HeaderData
   sections: Array<DocSection>
+  /**
+   * Canvas builder tree (root Box). Optional during the typed→canvas migration: when
+   * absent the editor renders the typed `sections`; when present the canvas is the layout
+   * source of truth. Persisted under `meta.hireloom.canvas`.
+   */
+  canvas?: CanvasBox
 }

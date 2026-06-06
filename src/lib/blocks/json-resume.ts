@@ -241,7 +241,7 @@ export function resumeToDoc(resume: Resume): BlockDoc {
     sections.sort((x, y) => rank(x.type) - rank(y.type))
   }
 
-  return { header, sections }
+  return { header, sections, ...(hl?.canvas ? { canvas: hl.canvas } : {}) }
 }
 
 function items(doc: BlockDoc, type: string): Array<Record<string, unknown>> {
@@ -363,6 +363,7 @@ export function docToResume(doc: BlockDoc, base?: Resume): Resume {
         sectionColumns,
         sectionHeadings,
         ...(customLines.length ? { customLines } : {}),
+        ...(doc.canvas ? { canvas: doc.canvas } : {}),
       },
     },
   }
