@@ -8,6 +8,7 @@ import type { TextAction } from '#/lib/ai/service'
 import { headerBlock } from '#/lib/blocks/defs/header'
 import type { BlockDoc } from '#/lib/blocks/document'
 import { getSection } from '#/lib/blocks/sections'
+import { decompose } from '#/lib/canvas/decompose'
 
 function mergeKnown(
   data: Record<string, unknown>,
@@ -387,6 +388,23 @@ export function useBlockDoc(initial: BlockDoc) {
     [bump],
   )
 
+  // Canvas builder mode: presence of `doc.canvas` IS the mode (renderer branches on it).
+  // Enabling synthesizes a primitive tree from the current typed sections (migration);
+  // disabling drops back to the typed editor. Autosave persists it via meta.hireloom.canvas.
+  const onEnableCanvas = useCallback(() => {
+    setDoc((d) => (d.canvas ? d : { ...d, canvas: decompose(d) }))
+    bump()
+  }, [bump])
+
+  const onDisableCanvas = useCallback(() => {
+    setDoc((d) => {
+      if (!d.canvas) return d
+      const { canvas: _drop, ...rest } = d
+      return rest
+    })
+    bump()
+  }, [bump])
+
   // The stable editing surface — provided to the document tree via context.
   const actions = useMemo(
     () => ({
@@ -429,7 +447,7 @@ export function useBlockDoc(initial: BlockDoc) {
     ],
   )
 
-  return { doc, rev, bump, actions, ...actions }
+  return { doc, rev, bump, actions, onEnableCanvas, onDisableCanvas, ...actions }
 }
 
 function makeSectionId(type: string): string {

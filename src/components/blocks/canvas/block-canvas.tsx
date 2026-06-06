@@ -1,4 +1,4 @@
-import { MaximizeIcon, MinusIcon, PlusIcon } from 'lucide-react'
+import { BoxesIcon, MaximizeIcon, MinusIcon, PlusIcon } from 'lucide-react'
 import { useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useAiReady } from '#/lib/ai/use-ai-ready'
@@ -38,6 +38,7 @@ export function BlockCanvas({
   const mounted = useMounted()
   const fit = useFitToWidth(panelRef, PAGE_W)
   const zoom = fit * userZoom
+  const canvasMode = Boolean(controller.doc.canvas)
 
   return (
     <div
@@ -96,6 +97,29 @@ export function BlockCanvas({
           className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <MaximizeIcon className="size-4" />
+        </button>
+        <div className="mx-0.5 h-5 w-px bg-border" />
+        <button
+          type="button"
+          aria-pressed={canvasMode}
+          title={
+            canvasMode
+              ? 'Switch back to the classic editor'
+              : 'Convert to the primitive builder (beta)'
+          }
+          onClick={() =>
+            canvasMode
+              ? controller.onDisableCanvas()
+              : controller.onEnableCanvas()
+          }
+          className={
+            canvasMode
+              ? 'flex h-7 items-center gap-1.5 rounded-md bg-primary px-2 text-xs font-medium text-primary-foreground'
+              : 'flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+          }
+        >
+          <BoxesIcon className="size-4" />
+          Builder
         </button>
       </div>
     </div>

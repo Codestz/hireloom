@@ -112,4 +112,19 @@ describe('resume ↔ doc round-trip', () => {
     const empty: Resume = {}
     expect(() => docToResume(resumeToDoc(empty), empty)).not.toThrow()
   })
+
+  it('persists a canvas tree when present and strips a stale one when the builder is off', () => {
+    const doc = resumeToDoc(sample)
+    const canvas = { id: 'box-root', kind: 'box' as const, props: { layout: 'vertical' as const }, children: [] }
+
+    // Builder on: canvas is persisted under meta.hireloom.canvas.
+    const withCanvas = docToResume({ ...doc, canvas }, sample)
+    expect(withCanvas.meta?.hireloom?.canvas).toEqual(canvas)
+    expect(resumeToDoc(withCanvas).canvas).toEqual(canvas)
+
+    // Builder off: a previously-saved canvas must NOT linger via the base spread.
+    const off = docToResume(doc, withCanvas)
+    expect(off.meta?.hireloom?.canvas).toBeUndefined()
+    expect(resumeToDoc(off).canvas).toBeUndefined()
+  })
 })
