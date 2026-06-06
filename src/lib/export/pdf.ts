@@ -819,6 +819,35 @@ function pdfChildWidth(child: CanvasNode, between: boolean, index: number): stri
   return between && index === 0 ? '*' : 'auto'
 }
 
+/** Parse a CSS border shorthand → { width, color } for pdfmake table lines. */
+function parseBorder(border: string): { width: number; color: string } {
+  const w = /(\d+(?:\.\d+)?)px/.exec(border)
+  const c = /#[0-9a-f]{3,8}|rgba?\([^)]+\)/i.exec(border)
+  return { width: w ? Number(w[1]) : 0.5, color: c ? c[0] : RULE }
+}
+
+/** Wrap a content node in a 1-cell table when the box has background/border/padding. */
+function withBoxFrame(inner: PdfObj, p: CanvasBox['props']): PdfObj {
+  const hasFrame = p.bg !== undefined || p.border !== undefined || p.pad !== undefined
+  if (!hasFrame) return inner
+  const b = p.border ? parseBorder(p.border) : { width: 0, color: RULE }
+  const pad = p.pad ?? 0
+  return {
+    table: { widths: ['*'], body: [[inner]] },
+    layout: {
+      fillColor: () => p.bg ?? null,
+      hLineWidth: () => b.width,
+      vLineWidth: () => b.width,
+      hLineColor: () => b.color,
+      vLineColor: () => b.color,
+      paddingLeft: () => pad,
+      paddingRight: () => pad,
+      paddingTop: () => pad,
+      paddingBottom: () => pad,
+    },
+  }
+}
+
 function pdfNode(
   node: CanvasNode,
   t: ResolvedTokens,
@@ -829,30 +858,45 @@ function pdfNode(
   const p = node.props
   const gap = p.gap ?? 0
   const margin = p.margin !== undefined ? [p.margin, p.margin, p.margin, p.margin] : undefined
-  const horizontal =
-    p.display === 'grid' || ((p.display ?? 'flex') === 'flex' && p.direction === 'row')
+  const display = p.display ?? 'flex'
   const childFont = p.fontFamily ?? inheritedFont
 
-  if (horizontal) {
+  let inner: PdfObj
+  if (display === 'grid') {
+    // Grid → rows of N equal columns (pdfmake columns don't wrap, so chunk manually).
+    const cols = Math.max(1, p.gridColumns ?? 2)
+    const width = `${(100 / cols).toFixed(4)}%`
+    const rows: Array<PdfObj> = []
+    for (let i = 0; i < node.children.length; i += cols) {
+      const columns = node.children
+        .slice(i, i + cols)
+        .map((c) => ({ ...pdfNode(c, t, headingFont, childFont), width }))
+      rows.push({ columns, columnGap: gap || 6, ...(rows.length ? { margin: [0, gap, 0, 0] } : {}) })
+    }
+    inner = { stack: rows }
+  } else if (display === 'flex' && p.direction === 'row') {
     const between = p.justify === 'between'
     const columns = node.children.map((c, i) => ({
       ...pdfNode(c, t, headingFont, childFont),
       width: pdfChildWidth(c, between, i),
     }))
-    return { columns, columnGap: gap || 6, ...(margin ? { margin } : {}) }
+    inner = { columns, columnGap: gap || 6 }
+  } else {
+    // column / block → vertical stack; emulate gap with a top margin after the first child
+    const stack = node.children.map((c, i) => {
+      const obj = pdfNode(c, t, headingFont, childFont)
+      if (gap && i > 0) {
+        const m = Array.isArray(obj.margin) ? [...(obj.margin as Array<number>)] : [0, 0, 0, 0]
+        m[1] = (m[1] ?? 0) + gap
+        return { ...obj, margin: m }
+      }
+      return obj
+    })
+    inner = { stack }
   }
 
-  // column / block → vertical stack; emulate gap with a top margin on each child after the first
-  const stack = node.children.map((c, i) => {
-    const obj = pdfNode(c, t, headingFont, childFont)
-    if (gap && i > 0) {
-      const m = Array.isArray(obj.margin) ? [...(obj.margin as Array<number>)] : [0, 0, 0, 0]
-      m[1] = (m[1] ?? 0) + gap
-      return { ...obj, margin: m }
-    }
-    return obj
-  })
-  return { stack, ...(margin ? { margin } : {}) }
+  const framed = withBoxFrame(inner, p)
+  return margin ? { ...framed, margin } : framed
 }
 
 function buildCanvasDoc(root: CanvasBox, t: ResolvedTokens): TDocumentDefinitions {
