@@ -66,13 +66,13 @@ describe('decompose', () => {
   it('header: name→heading, contact→horizontal box of Text·Separator·Text (literal separators)', () => {
     const root = decompose(doc())
     const header = boxWithRole(root, 'header')!
-    expect(header.props.layout).toBe('vertical')
+    expect(header.props.direction).toBe('column')
     const headingEl = header.children[0] as CanvasElement
     expect(headingEl.kind).toBe('heading')
     expect(headingEl.data.text).toBe('Esteban Estrada')
 
     const contact = header.children.find((c) => isBox(c)) as CanvasBox
-    expect(contact.props.layout).toBe('horizontal')
+    expect(contact.props.direction).toBe('row')
     // email · phone · location (url empty → dropped). 3 texts + 2 separators.
     expect(kinds(contact.children)).toEqual(['text', 'separator', 'text', 'separator', 'text'])
     expect(contact.children.map(txt).filter(Boolean)).toEqual(['a@b.com', '+57 1', 'Medellín'])

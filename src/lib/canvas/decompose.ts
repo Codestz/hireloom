@@ -54,7 +54,7 @@ function inlineParts(
     if (i > 0) children.push(separator(variant))
     children.push(text(p.value, p.style))
   })
-  return makeBox('horizontal', { gap: 6 }, children)
+  return makeBox('row', { gap: 6 }, children)
 }
 
 const BOLD: ElementStyle = { fontWeight: 700 }
@@ -153,7 +153,7 @@ function entryBox(type: string, d: Record<string, unknown>): CanvasBox {
       for (const v of Object.values(d)) if (str(v)) children.push(text(str(v)))
     }
   }
-  return makeBox('vertical', { gap: 2 }, children)
+  return makeBox('column', { gap: 2 }, children)
 }
 
 /** Default heading text when a section has no custom heading. */
@@ -184,7 +184,7 @@ function sectionBox(section: DocSection): CanvasBox {
     for (const item of section.items) children.push(entryBox(section.type, item.data))
   }
 
-  const box = makeBox('vertical', { gap: 12 }, children)
+  const box = makeBox('column', { gap: 12 }, children)
   box.role = section.type
   return box
 }
@@ -205,7 +205,7 @@ function headerBox(doc: BlockDoc): CanvasBox {
   const summary = typeof h.summary === 'string' ? h.summary : ''
   if (summary) children.push(text(summary))
 
-  const box = makeBox('vertical', { gap: 4 }, children)
+  const box = makeBox('column', { gap: 4 }, children)
   box.role = 'header'
   return box
 }
@@ -218,5 +218,5 @@ function headerBox(doc: BlockDoc): CanvasBox {
 export function decompose(doc: BlockDoc): CanvasBox {
   const children: Array<CanvasNode> = [headerBox(doc)]
   for (const section of doc.sections) children.push(sectionBox(section))
-  return makeBox('vertical', { gap: 16 }, children)
+  return makeBox('column', { gap: 16 }, children)
 }

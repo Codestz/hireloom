@@ -22,11 +22,11 @@ function fixture() {
   const textA = makeElement('text', { text: 'A' })
   const sep = makeElement('separator', { variant: 'dot' })
   const textB = makeElement('text', { text: 'B' })
-  const header = makeBox('horizontal', {}, [textA, sep, textB])
+  const header = makeBox('row', {}, [textA, sep, textB])
   const list = makeElement('list', { items: ['x', 'y'] })
-  const skills = makeBox('vertical', {}, [list])
+  const skills = makeBox('column', {}, [list])
   skills.role = 'skills'
-  const root = makeBox('vertical', {}, [header, skills])
+  const root = makeBox('column', {}, [header, skills])
   return { root, textA, sep, textB, header, list, skills }
 }
 
@@ -60,9 +60,9 @@ describe('immutability', () => {
 describe('updates', () => {
   it('updateBoxProps merges props', () => {
     const { root, header } = fixture()
-    const next = updateBoxProps(root, header.id, { gap: 8, layout: 'vertical' })
+    const next = updateBoxProps(root, header.id, { gap: 8, direction: 'column' })
     const box = findNode(next, header.id) as CanvasBox
-    expect(box.props).toEqual({ layout: 'vertical', gap: 8 })
+    expect(box.props).toEqual({ display: 'flex', direction: 'column', gap: 8 })
   })
 
   it('setBoxRole sets and clears', () => {
@@ -140,6 +140,6 @@ describe('schema round-trip', () => {
       children: [{ id: 'text-1', kind: 'text', data: { text: 'hi' } }],
     }
     const parsed = CanvasSchema.parse(raw)
-    expect(parsed.props.layout).toBe('vertical') // default applied
+    expect(parsed.props.display).toBe('flex') // default applied
   })
 })

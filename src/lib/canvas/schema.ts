@@ -11,7 +11,9 @@ import type { CanvasBox } from './model'
 
 const BoxPropsSchema = z
   .object({
-    layout: z.enum(['vertical', 'horizontal']).default('vertical'),
+    display: z.enum(['flex', 'grid', 'block']).default('flex'),
+    direction: z.enum(['row', 'column']).optional(),
+    gridColumns: z.number().optional(),
     gap: z.number().optional(),
     pad: z.number().optional(),
     margin: z.number().optional(),

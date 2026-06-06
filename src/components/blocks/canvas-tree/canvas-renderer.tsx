@@ -6,7 +6,7 @@ import {
   SELECT_COLOR,
   useCanvasSelection,
 } from '#/components/blocks/canvas-tree/selection'
-import { isBox } from '#/lib/canvas/model'
+import { isBox, isHorizontal } from '#/lib/canvas/model'
 import type {
   CanvasBox,
   CanvasElement,
@@ -39,16 +39,23 @@ function separatorVariant(v: unknown): SeparatorVariant {
 
 function boxStyle(box: CanvasBox): CSSProperties {
   const p = box.props
-  const style: CSSProperties = {
-    display: 'flex',
-    flexDirection: p.layout === 'horizontal' ? 'row' : 'column',
+  const display = p.display ?? 'flex'
+  const style: CSSProperties = {}
+  if (display === 'grid') {
+    style.display = 'grid'
+    style.gridTemplateColumns = `repeat(${p.gridColumns ?? 2}, minmax(0, 1fr))`
+  } else if (display === 'block') {
+    style.display = 'block'
+  } else {
+    style.display = 'flex'
+    style.flexDirection = p.direction === 'row' ? 'row' : 'column'
+    if (p.wrap) style.flexWrap = 'wrap'
   }
   if (p.gap !== undefined) style.gap = p.gap
   if (p.pad !== undefined) style.padding = p.pad
   if (p.margin !== undefined) style.margin = p.margin
   if (p.align) style.alignItems = mapAlign(p.align)
   if (p.justify) style.justifyContent = mapJustify(p.justify)
-  if (p.wrap) style.flexWrap = 'wrap'
   if (p.bg) style.background = p.bg
   if (p.border) style.border = p.border
   if (p.radius !== undefined) style.borderRadius = p.radius
@@ -252,7 +259,7 @@ function Selectable({
 }
 
 function BoxView({ box, tokens }: { box: CanvasBox; tokens: ResolvedTokens }) {
-  const horizontal = box.props.layout === 'horizontal'
+  const horizontal = isHorizontal(box)
   return (
     <div style={boxStyle(box)}>
       {box.children.map((child) => (

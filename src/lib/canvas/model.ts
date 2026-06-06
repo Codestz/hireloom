@@ -12,7 +12,9 @@
  * Box and reconstructed by the bridge (see decompose/recompose, WS-A).
  */
 
-export type BoxLayout = 'vertical' | 'horizontal'
+/** How a Box arranges its children (Elementor "Container" model). */
+export type BoxDisplay = 'flex' | 'grid' | 'block'
+export type FlexDirection = 'row' | 'column'
 
 /** Leaf element kinds. Anything that is not a `box`. */
 export type ElementKind =
@@ -54,7 +56,12 @@ export type NodeRole =
   | 'custom'
 
 export interface BoxProps {
-  layout: BoxLayout
+  /** How children are arranged. Defaults to 'flex'. */
+  display?: BoxDisplay
+  /** Flex main axis (display:flex only). Defaults to 'column'. */
+  direction?: FlexDirection
+  /** Number of equal columns (display:grid only). Defaults to 2. */
+  gridColumns?: number
   /** Spacing between children, in px. */
   gap?: number
   /** Inner padding, in px. */
@@ -63,7 +70,7 @@ export interface BoxProps {
   margin?: number
   align?: BoxAlign
   justify?: BoxJustify
-  /** Allow children to wrap (horizontal layout). */
+  /** Allow children to wrap (flex row). */
   wrap?: boolean
   /** CSS color / token for background. */
   bg?: string
@@ -71,7 +78,7 @@ export interface BoxProps {
   border?: string
   /** Border radius, in px. */
   radius?: number
-  /** Width in /12 units when this Box sits inside a horizontal parent Box. */
+  /** Width in /12 units when this Box sits inside a flex-row parent (or grid cell). */
   span?: number
 }
 
@@ -129,21 +136,29 @@ export function isElement(node: CanvasNode): node is CanvasElement {
   return node.kind !== 'box'
 }
 
+/** True when a Box lays its children out in a horizontal row (flex + direction row). */
+export function isHorizontal(box: CanvasBox): boolean {
+  return (box.props.display ?? 'flex') === 'flex' && box.props.direction === 'row'
+}
+
 /** Mint a fresh, kind-prefixed node id. */
 export function newNodeId(kind: 'box' | ElementKind): string {
   return `${kind}-${crypto.randomUUID().slice(0, 8)}`
 }
 
-/** Create an empty Box with the given layout (defaults vertical). */
+/**
+ * Create an empty flex Box with the given main-axis direction (defaults 'column').
+ * Pass extra `props` to override display/grid/spacing/etc.
+ */
 export function makeBox(
-  layout: BoxLayout = 'vertical',
+  direction: FlexDirection = 'column',
   props: Partial<BoxProps> = {},
   children: Array<CanvasNode> = [],
 ): CanvasBox {
   return {
     id: newNodeId('box'),
     kind: 'box',
-    props: { layout, ...props },
+    props: { display: 'flex', direction, ...props },
     children,
   }
 }
@@ -159,5 +174,5 @@ export function makeElement(
 
 /** An empty starting document: one vertical root Box. */
 export function emptyCanvas(): CanvasDoc {
-  return { root: makeBox('vertical') }
+  return { root: makeBox('column') }
 }

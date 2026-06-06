@@ -4,8 +4,9 @@ import type { useBlockDoc } from '#/components/blocks'
 import { useCanvasSelection } from '#/components/blocks/canvas-tree/selection'
 import { isBox, makeBox, makeElement } from '#/lib/canvas/model'
 import type {
-  BoxLayout,
+  BoxDisplay,
   CanvasNode,
+  FlexDirection,
   ElementKind,
   SeparatorVariant,
 } from '#/lib/canvas/model'
@@ -184,21 +185,60 @@ function BoxSettings({
   controller: Controller
   node: Extract<CanvasNode, { kind: 'box' }>
 }) {
+  const display = node.props.display ?? 'flex'
   return (
     <div className={groupCls}>
-      <span className={labelCls}>Layout</span>
+      <span className={labelCls}>Display</span>
       <div className="mb-3 flex gap-1.5">
-        {(['vertical', 'horizontal'] as Array<BoxLayout>).map((l) => (
+        {(['flex', 'grid', 'block'] as Array<BoxDisplay>).map((d) => (
           <button
-            key={l}
+            key={d}
             type="button"
-            onClick={() => controller.onCanvasUpdateProps(node.id, { layout: l })}
-            className={node.props.layout === l ? chipActiveCls : chipCls}
+            onClick={() => controller.onCanvasUpdateProps(node.id, { display: d })}
+            className={display === d ? chipActiveCls : chipCls}
           >
-            {l === 'vertical' ? '↓ Vertical' : '→ Horizontal'}
+            {d}
           </button>
         ))}
       </div>
+
+      {display === 'flex' ? (
+        <>
+          <span className={labelCls}>Direction</span>
+          <div className="mb-3 flex gap-1.5">
+            {(['column', 'row'] as Array<FlexDirection>).map((dir) => (
+              <button
+                key={dir}
+                type="button"
+                onClick={() => controller.onCanvasUpdateProps(node.id, { direction: dir })}
+                className={
+                  (node.props.direction ?? 'column') === dir ? chipActiveCls : chipCls
+                }
+              >
+                {dir === 'column' ? '↓ Column' : '→ Row'}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {display === 'grid' ? (
+        <>
+          <label className={labelCls}>Columns</label>
+          <input
+            type="number"
+            min={1}
+            max={12}
+            className={`${inputCls} mb-3`}
+            value={node.props.gridColumns ?? ''}
+            onChange={(e) =>
+              controller.onCanvasUpdateProps(node.id, {
+                gridColumns: e.target.value === '' ? undefined : Number(e.target.value),
+              })
+            }
+          />
+        </>
+      ) : null}
 
       <label className={labelCls}>Gap (px)</label>
       <input
