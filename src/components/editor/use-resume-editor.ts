@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useBlockDoc } from '#/components/blocks'
-import { downloadResumePdf } from '#/lib/export/pdf'
+import { downloadCanvasPdf, downloadResumePdf } from '#/lib/export/pdf'
 import { SECTIONS } from '#/lib/blocks/sections'
 import {
   updateResumeData,
@@ -115,7 +115,13 @@ export function useResumeEditor(record: ResumeRecord) {
 
   function exportPdf() {
     const id = toast.loading('Generating PDF…')
-    downloadResumePdf(exportDoc(), resolved, `${slugify(record.title)}.pdf`, { layout })
+    const file = `${slugify(record.title)}.pdf`
+    // WYSIWYG: when there's a canvas, render it directly so the PDF matches the editor;
+    // otherwise fall back to the typed-section renderer.
+    const job = doc.canvas
+      ? downloadCanvasPdf(doc.canvas, resolved, file)
+      : downloadResumePdf(doc, resolved, file, { layout })
+    job
       .then(() => toast.success('Downloaded PDF', { id }))
       .catch((e: unknown) => {
         console.error('[pdf-export]', e)

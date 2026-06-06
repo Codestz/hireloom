@@ -5,6 +5,8 @@ import type { HeaderData } from '#/lib/blocks/defs/header'
 import type { BlockDoc, DocSection } from '#/lib/blocks/document'
 import { PDF_VFS_FONTS } from './pdf-fonts'
 import { getSection } from '#/lib/blocks/sections'
+import { isBox } from '#/lib/canvas/model'
+import type { CanvasBox, CanvasNode, ElementStyle } from '#/lib/canvas/model'
 
 /**
  * Our own client-side PDF export (pdfmake) — builds the file in-browser and downloads
@@ -726,4 +728,133 @@ export async function downloadResumePdf(
 ): Promise<void> {
   const pdfMake = await loadPdfMake()
   pdfMake.createPdf(buildDoc(doc, tokens, opts)).download(filename)
+}
+
+// ── WYSIWYG: render the canvas Box tree straight to pdfmake (matches the editor) ──────────
+
+const SEP_GLYPH: Record<string, string> = {
+  dot: '·',
+  bullet: '•',
+  dash: '–',
+  line: '—',
+  slash: '/',
+  pipe: '|',
+}
+
+/** Map an element's style to pdfmake text props. */
+function pdfElStyle(style: ElementStyle | undefined): Record<string, unknown> {
+  const s: Record<string, unknown> = {}
+  if (!style) return s
+  if (style.fontSize !== undefined) s.fontSize = style.fontSize
+  if (style.fontWeight !== undefined && style.fontWeight >= 600) s.bold = true
+  if (style.italic) s.italics = true
+  if (style.underline) s.decoration = 'underline'
+  if (style.color) s.color = style.color
+  if (style.align) s.alignment = style.align
+  return s
+}
+
+type PdfObj = Record<string, unknown>
+
+function pdfElement(el: CanvasNode, t: ResolvedTokens, headingFont: PdfFamily): PdfObj {
+  const data = (el as { data?: Record<string, unknown> }).data ?? {}
+  const style = pdfElStyle((el as { style?: ElementStyle }).style)
+  const fs = t.baseFontSize
+  switch (el.kind) {
+    case 'heading': {
+      const level = data.level === 1 ? 1 : data.level === 3 ? 3 : 2
+      const text = S(data.text)
+      return {
+        text: level >= 2 ? text.toUpperCase() : text,
+        font: headingFont,
+        fontSize: level === 1 ? fs * 1.8 : fs * 0.85,
+        bold: level === 1,
+        color: level >= 2 ? t.accent : INK,
+        characterSpacing: level >= 2 ? 1 : 0,
+        ...style,
+      }
+    }
+    case 'text':
+      return { text: S(data.text), ...style }
+    case 'list':
+      return { ul: A(data.items).filter(Boolean), markerColor: t.accent, ...style }
+    case 'separator':
+      return { text: SEP_GLYPH[S(data.variant)] ?? '·', color: MUTED, ...style }
+    case 'divider':
+      return {
+        canvas: [
+          { type: 'line', x1: 0, y1: 0, x2: PAGE_CONTENT_WIDTH, y2: 0, lineWidth: 0.5, lineColor: RULE },
+        ],
+        margin: [0, 2, 0, 2],
+      }
+    case 'spacer':
+      return { text: '', margin: [0, 0, 0, typeof data.size === 'number' ? data.size : 8] }
+    case 'image':
+      return S(data.src)
+        ? { image: S(data.src), width: typeof data.width === 'number' ? data.width : 120 }
+        : { text: '' }
+    case 'button':
+      return { text: S(data.label), color: t.accent, bold: true, ...style }
+    case 'icon':
+      return { text: S(data.name), ...style }
+    default:
+      return { text: '' }
+  }
+}
+
+function pdfChildWidth(child: CanvasNode, between: boolean, index: number): string {
+  if (isBox(child) && typeof child.props.span === 'number') {
+    return `${Math.round((child.props.span / 12) * 100)}%`
+  }
+  return between && index === 0 ? '*' : 'auto'
+}
+
+function pdfNode(node: CanvasNode, t: ResolvedTokens, headingFont: PdfFamily): PdfObj {
+  if (!isBox(node)) return pdfElement(node, t, headingFont)
+  const p = node.props
+  const gap = p.gap ?? 0
+  const margin = p.margin !== undefined ? [p.margin, p.margin, p.margin, p.margin] : undefined
+  const horizontal =
+    p.display === 'grid' || ((p.display ?? 'flex') === 'flex' && p.direction === 'row')
+
+  if (horizontal) {
+    const between = p.justify === 'between'
+    const columns = node.children.map((c, i) => ({
+      ...pdfNode(c, t, headingFont),
+      width: pdfChildWidth(c, between, i),
+    }))
+    return { columns, columnGap: gap || 6, ...(margin ? { margin } : {}) }
+  }
+
+  // column / block → vertical stack; emulate gap with a top margin on each child after the first
+  const stack = node.children.map((c, i) => {
+    const obj = pdfNode(c, t, headingFont)
+    if (gap && i > 0) {
+      const m = Array.isArray(obj.margin) ? [...(obj.margin as Array<number>)] : [0, 0, 0, 0]
+      m[1] = (m[1] ?? 0) + gap
+      return { ...obj, margin: m }
+    }
+    return obj
+  })
+  return { stack, ...(margin ? { margin } : {}) }
+}
+
+function buildCanvasDoc(root: CanvasBox, t: ResolvedTokens): TDocumentDefinitions {
+  const headingFont = familyOf(t.fontHeadingPdf)
+  return {
+    pageSize: 'A4',
+    pageMargins: [48, 48, 48, 48],
+    defaultStyle: { font: familyOf(t.fontBodyPdf), fontSize: t.baseFontSize, color: BODY, lineHeight: 1.3 },
+    content: [pdfNode(root, t, headingFont)] as unknown as Array<Content>,
+  }
+}
+
+/** WYSIWYG export: build the PDF directly from the canvas tree so it matches the editor. */
+export async function downloadCanvasPdf(
+  root: CanvasBox,
+  tokens: ResolvedTokens,
+  filename: string,
+): Promise<void> {
+  const pdfMake = await loadPdfMake()
+  pdfMake.createPdf(buildCanvasDoc(root, tokens)).download(filename)
 }
