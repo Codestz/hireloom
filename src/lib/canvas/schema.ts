@@ -67,6 +67,7 @@ export const CanvasBoxSchema: z.ZodType<CanvasBox> = z.lazy(() =>
     id: z.string(),
     kind: z.literal('box'),
     role: z.string().optional(),
+    name: z.string().optional(),
     props: BoxPropsSchema,
     children: z.array(z.union([CanvasBoxSchema, ElementSchema])),
   }),

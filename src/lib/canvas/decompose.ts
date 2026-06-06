@@ -12,6 +12,7 @@
 import type { BlockDoc, DocSection } from '#/lib/blocks/document'
 import type { ResolvedTokens } from '#/lib/templates'
 import { isBox, makeBox, makeElement } from './model'
+import { assignSectionNames } from './document-index'
 import type {
   CanvasBox,
   CanvasElement,
@@ -205,7 +206,9 @@ export function decompose(doc: BlockDoc, t: ResolvedTokens): CanvasBox {
 
   const children: Array<CanvasNode> = [headerBox()]
   for (const section of doc.sections) children.push(sectionBox(section))
-  return makeBox('column', { gap: t.space(10) }, children)
+  const root = makeBox('column', { gap: t.space(10) }, children)
+  assignSectionNames(root) // unique @-mention labels for every section
+  return root
 }
 
 function sectionHeadingText(section: DocSection): string {

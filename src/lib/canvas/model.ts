@@ -101,6 +101,12 @@ export interface CanvasBox {
   kind: 'box'
   /** Optional semantic hint for export/ATS; layout is independent of it. */
   role?: string
+  /**
+   * Human-friendly, UNIQUE address label for a section box (the `@`-mention name). Auto-derived
+   * from the heading/role and de-duplicated; user-renameable. `role` stays the semantic anchor.
+   * Only meaningful on top-level section boxes; see lib/canvas/document-index.ts.
+   */
+  name?: string
   props: BoxProps
   children: Array<CanvasNode>
 }
