@@ -7,17 +7,30 @@ import { SELECT_COLOR, useCanvasSelection } from './selection'
 import { useDragState } from './drag-context'
 import { KIND_LABEL } from './node-style'
 
-/** The little type chip above a selected node, with a ↑ "select parent" button. */
-function SelectionBadge({
+/**
+ * The node chip: one coherent affordance pinned to the node's top-left edge (color-matched —
+ * teal for boxes, indigo for leaves). On hover it's just a grip (the drag handle); on selection
+ * it expands to grip + type label + ↑ select-parent. Replaces the old floating gutter grip +
+ * separate badge.
+ */
+function NodeChip({
   node,
   parentId,
   color,
+  selected,
   onSelectParent,
+  gripRef,
+  gripListeners,
+  gripAttributes,
 }: {
   node: CanvasNode
   parentId: string | null
   color: string
+  selected: boolean
   onSelectParent: (id: string) => void
+  gripRef: (el: HTMLElement | null) => void
+  gripListeners: Record<string, unknown> | undefined
+  gripAttributes: Record<string, unknown>
 }) {
   return (
     <span
@@ -30,52 +43,79 @@ function SelectionBadge({
         zoom: 'var(--chrome-zoom, 1)' as unknown as number,
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 4,
+        gap: 3,
         background: color,
         color: '#fff',
         fontSize: 9,
         lineHeight: 1.4,
-        padding: '1px 4px 1px 6px',
-        borderRadius: 3,
+        padding: '1px 4px',
+        borderRadius: 4,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
         fontFamily: 'ui-sans-serif, system-ui, sans-serif',
         letterSpacing: 0.3,
         whiteSpace: 'nowrap',
-        zIndex: 10,
+        zIndex: 11,
       }}
     >
-      {KIND_LABEL[node.kind] ?? node.kind}
       {parentId ? (
         <button
-          type="button"
-          title="Select parent container"
-          onClick={(e) => {
-            e.stopPropagation()
-            onSelectParent(parentId)
-          }}
+          ref={gripRef}
+          {...gripListeners}
+          {...gripAttributes}
+          aria-label="Drag to move"
+          title="Drag to move"
+          onClick={(e) => e.stopPropagation()}
           style={{
             display: 'inline-flex',
-            cursor: 'pointer',
+            cursor: 'grab',
             border: 'none',
-            background: 'rgba(255,255,255,0.25)',
+            background: 'transparent',
             color: '#fff',
-            borderRadius: 2,
-            padding: '0 3px',
-            lineHeight: 1.3,
+            padding: 0,
+            margin: '0 -1px',
+            touchAction: 'none',
           }}
         >
-          ↑
+          <GripVerticalIcon style={{ width: 11, height: 11 }} />
         </button>
+      ) : null}
+
+      {selected ? (
+        <>
+          <span style={{ fontWeight: 600 }}>{KIND_LABEL[node.kind] ?? node.kind}</span>
+          {parentId ? (
+            <button
+              type="button"
+              title="Select parent container"
+              onClick={(e) => {
+                e.stopPropagation()
+                onSelectParent(parentId)
+              }}
+              style={{
+                display: 'inline-flex',
+                cursor: 'pointer',
+                border: 'none',
+                background: 'rgba(255,255,255,0.25)',
+                color: '#fff',
+                borderRadius: 2,
+                padding: '0 3px',
+                lineHeight: 1.3,
+              }}
+            >
+              ↑
+            </button>
+          ) : null}
+        </>
       ) : null}
     </span>
   )
 }
 
 /**
- * Click-to-select + drag-handle wrapper. Selection language: a Box gets a DASHED teal outline,
- * a leaf a SOLID indigo one (faint on hover, bold + badge on select). Dragging is initiated
- * only from the grip in the gutter (so inline text editing is never hijacked); the dragged
- * node dims while a drop line elsewhere shows where it'll land. Carries flex sizing (span /12)
- * when the parent is a row.
+ * Click-to-select + drag wrapper. Selection language: a Box gets a DASHED teal outline, a leaf
+ * a SOLID indigo one (faint on hover, bold + chip on select/hover). Dragging starts from the
+ * chip's grip only (so inline editing isn't hijacked); the dragged node dims while a drop line
+ * elsewhere shows where it lands. Carries flex sizing (span /12) when the parent is a row.
  */
 export function Selectable({
   node,
@@ -126,41 +166,18 @@ export function Selectable({
         opacity: dragging ? 0.4 : undefined,
       }}
     >
-      {selected ? (
-        <SelectionBadge node={node} parentId={parentId} color={color} onSelectParent={select} />
+      {selected || hovered ? (
+        <NodeChip
+          node={node}
+          parentId={parentId}
+          color={color}
+          selected={selected}
+          onSelectParent={select}
+          gripRef={setActivatorNodeRef}
+          gripListeners={listeners}
+          gripAttributes={attributes}
+        />
       ) : null}
-
-      {/* Drag grip — only non-root nodes; appears in the gutter on hover/selection. */}
-      {parentId ? (
-        <button
-          ref={setActivatorNodeRef}
-          {...listeners}
-          {...attributes}
-          aria-label="Drag to move"
-          title="Drag to move"
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            position: 'absolute',
-            left: -18,
-            top: 1,
-            zoom: 'var(--chrome-zoom, 1)' as unknown as number,
-            cursor: 'grab',
-            display: 'inline-flex',
-            padding: 1,
-            borderRadius: 3,
-            border: `1px solid ${color}`,
-            background: '#fff',
-            color,
-            opacity: hovered || selected ? 1 : 0,
-            transition: 'opacity 120ms',
-            zIndex: 11,
-            touchAction: 'none',
-          }}
-        >
-          <GripVerticalIcon style={{ width: 11, height: 11 }} />
-        </button>
-      ) : null}
-
       {children}
     </div>
   )
