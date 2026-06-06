@@ -35,9 +35,11 @@ export function AiTextMenu({
       toast.error('Nothing to improve yet.')
       return
     }
+    // Only the real editor — NOT the chip's contenteditable="false" span (which would match
+    // a bare [contenteditable] selector and come first in DOM, so the stream would land there).
     const el = triggerRef.current
       ?.closest('[data-ai-row]')
-      ?.querySelector<HTMLElement>('[contenteditable]')
+      ?.querySelector<HTMLElement>('[contenteditable="true"]')
     setBusy(true)
     const id = toast.loading('Improving on your device…')
     try {
