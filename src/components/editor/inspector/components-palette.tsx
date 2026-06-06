@@ -1,3 +1,4 @@
+import { useDraggable } from '@dnd-kit/core'
 import {
   BoxSelectIcon,
   ColumnsIcon,
@@ -15,51 +16,53 @@ import {
 import type { ComponentType } from 'react'
 import type { useBlockDoc } from '#/components/blocks'
 import { useCanvasSelection } from '#/components/blocks/canvas-tree/selection'
-import { isBox, makeBox, makeElement } from '#/lib/canvas/model'
-import type { CanvasNode } from '#/lib/canvas/model'
+import { isBox } from '#/lib/canvas/model'
 import { findNode } from '#/lib/canvas/tree-ops'
+import { PALETTE_LABEL, makePaletteNode, paletteDragId } from '#/lib/canvas/palette'
+import type { PaletteKey } from '#/lib/canvas/palette'
 
 type Controller = ReturnType<typeof useBlockDoc>
 
-interface PaletteItem {
-  label: string
-  icon: ComponentType<{ className?: string }>
-  make: () => CanvasNode
+const ICON: Record<PaletteKey, ComponentType<{ className?: string }>> = {
+  'box-column': RowsIcon,
+  'box-row': ColumnsIcon,
+  heading: HeadingIcon,
+  text: TypeIcon,
+  list: ListIcon,
+  separator: SeparatorVerticalIcon,
+  divider: MinusIcon,
+  spacer: SpaceIcon,
+  image: ImageIcon,
+  icon: SmileIcon,
+  button: MousePointerClickIcon,
 }
 
-const GROUPS: Array<{ title: string; items: Array<PaletteItem> }> = [
-  {
-    title: 'Containers',
-    items: [
-      { label: 'Column', icon: RowsIcon, make: () => makeBox('column', { gap: 8 }) },
-      { label: 'Row', icon: ColumnsIcon, make: () => makeBox('row', { gap: 6 }) },
-    ],
-  },
-  {
-    title: 'Text',
-    items: [
-      { label: 'Heading', icon: HeadingIcon, make: () => makeElement('heading', { text: 'Heading', level: 2 }) },
-      { label: 'Text', icon: TypeIcon, make: () => makeElement('text', { text: 'Text' }) },
-      { label: 'List', icon: ListIcon, make: () => makeElement('list', { items: ['Item'] }) },
-    ],
-  },
-  {
-    title: 'Structure',
-    items: [
-      { label: 'Separator', icon: SeparatorVerticalIcon, make: () => makeElement('separator', { variant: 'dot' }) },
-      { label: 'Divider', icon: MinusIcon, make: () => makeElement('divider', {}) },
-      { label: 'Spacer', icon: SpaceIcon, make: () => makeElement('spacer', { size: 12 }) },
-    ],
-  },
-  {
-    title: 'Media',
-    items: [
-      { label: 'Image', icon: ImageIcon, make: () => makeElement('image', { src: '', alt: '' }) },
-      { label: 'Icon', icon: SmileIcon, make: () => makeElement('icon', { name: '' }) },
-      { label: 'Button', icon: MousePointerClickIcon, make: () => makeElement('button', { label: 'Button' }) },
-    ],
-  },
+const GROUPS: Array<{ title: string; keys: Array<PaletteKey> }> = [
+  { title: 'Containers', keys: ['box-column', 'box-row'] },
+  { title: 'Text', keys: ['heading', 'text', 'list'] },
+  { title: 'Structure', keys: ['separator', 'divider', 'spacer'] },
+  { title: 'Media', keys: ['image', 'icon', 'button'] },
 ]
+
+/** A palette item: drag onto the canvas to place at the drop line, or click to add into the target. */
+function PaletteCard({ paletteKey, onAdd }: { paletteKey: PaletteKey; onAdd: () => void }) {
+  const { setNodeRef, listeners, attributes } = useDraggable({ id: paletteDragId(paletteKey) })
+  const Icon = ICON[paletteKey]
+  return (
+    <button
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      type="button"
+      onClick={onAdd}
+      style={{ touchAction: 'none' }}
+      className="flex aspect-square cursor-grab flex-col items-center justify-center gap-1.5 rounded-lg border border-border bg-background text-[10px] text-muted-foreground transition-colors hover:border-primary hover:bg-muted hover:text-foreground"
+    >
+      <Icon className="size-4" />
+      {PALETTE_LABEL[paletteKey]}
+    </button>
+  )
+}
 
 export function ComponentsPalette({ controller }: { controller: Controller }) {
   const { selectedId, select } = useCanvasSelection()
@@ -73,7 +76,7 @@ export function ComponentsPalette({ controller }: { controller: Controller }) {
     <div className="space-y-4 p-3">
       <div className="flex items-center gap-2 rounded-md bg-muted/60 px-2.5 py-2 text-[11px] text-muted-foreground">
         <BoxSelectIcon className="size-3.5 shrink-0" />
-        Adding into{' '}
+        Drag onto the canvas, or click to add into{' '}
         <span className="font-medium text-foreground">
           {intoBox ? 'the selected box' : 'the page'}
         </span>
@@ -85,24 +88,17 @@ export function ComponentsPalette({ controller }: { controller: Controller }) {
             {group.title}
           </span>
           <div className="grid grid-cols-3 gap-1.5">
-            {group.items.map((item) => {
-              const Icon = item.icon
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => {
-                    const node = item.make()
-                    controller.onCanvasAddNode(target, node)
-                    select(node.id)
-                  }}
-                  className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-lg border border-border bg-background text-[10px] text-muted-foreground transition-colors hover:border-primary hover:bg-muted hover:text-foreground"
-                >
-                  <Icon className="size-4" />
-                  {item.label}
-                </button>
-              )
-            })}
+            {group.keys.map((key) => (
+              <PaletteCard
+                key={key}
+                paletteKey={key}
+                onAdd={() => {
+                  const node = makePaletteNode(key)
+                  controller.onCanvasAddNode(target, node)
+                  select(node.id)
+                }}
+              />
+            ))}
           </div>
         </div>
       ))}

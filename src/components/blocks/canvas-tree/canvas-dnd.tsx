@@ -18,6 +18,11 @@ import type { useBlockDoc } from '#/components/blocks'
 import { isBox, isHorizontal } from '#/lib/canvas/model'
 import type { CanvasBox } from '#/lib/canvas/model'
 import { findNode, findParent } from '#/lib/canvas/tree-ops'
+import {
+  PALETTE_LABEL,
+  makePaletteNode,
+  paletteKeyFromId,
+} from '#/lib/canvas/palette'
 import { KIND_LABEL } from './node-style'
 import { DragContext } from './drag-context'
 import type { DragState } from './drag-context'
@@ -125,6 +130,14 @@ export function CanvasDndProvider({
     dropRef.current = null
     setState(EMPTY)
     if (!active || !drop) return
+
+    // Palette drop (new:<key>) → insert a fresh node at the slot; otherwise move an existing one.
+    const paletteKey = paletteKeyFromId(active)
+    if (paletteKey) {
+      controller.onCanvasInsertNode(drop.over, makePaletteNode(paletteKey), drop.index)
+      return
+    }
+
     let index = drop.index
     // Same-container downward move: moveNode removes-then-inserts, so the target shifts back one.
     const parent = findParent(root, active)
@@ -137,6 +150,8 @@ export function CanvasDndProvider({
 
   const activeLabel = state.activeId
     ? (() => {
+        const paletteKey = paletteKeyFromId(state.activeId)
+        if (paletteKey) return PALETTE_LABEL[paletteKey]
         const n = findNode(root, state.activeId)
         return n ? (KIND_LABEL[n.kind] ?? n.kind) : null
       })()
