@@ -5,6 +5,7 @@ import {
   BoldIcon,
   ColumnsIcon,
   HeadingIcon,
+  ImageIcon,
   ItalicIcon,
   LayoutIcon,
   MinusIcon,
@@ -15,6 +16,7 @@ import {
   TagIcon,
   TypeIcon,
   UnderlineIcon,
+  UploadIcon,
 } from 'lucide-react'
 import { useCanvasSelection } from '#/components/blocks/canvas-tree/selection'
 import { isBox, makeElement } from '#/lib/canvas/model'
@@ -338,6 +340,51 @@ function ConvertSection({ node, controller, parentId }: Ctx) {
 }
 
 /** Order matters — sections render top-to-bottom in the inspector. */
+function ImageSection({ node, controller }: Ctx) {
+  if (node.kind !== 'image') return null
+  const d = node.data as { src?: string; alt?: string; width?: number }
+  const set = (patch: Record<string, unknown>) => controller.onCanvasUpdateData(node.id, patch)
+  const onFile = (file: File | undefined) => {
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => set({ src: String(reader.result) })
+    reader.readAsDataURL(file)
+  }
+  return (
+    <Group title="Image" icon={ImageIcon}>
+      {d.src ? (
+        <img
+          src={d.src}
+          alt=""
+          className="max-h-28 w-full rounded-md border border-border object-contain"
+        />
+      ) : null}
+      <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-border px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+        <UploadIcon className="size-3.5" />
+        {d.src ? 'Replace image' : 'Upload image'}
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            onFile(e.target.files?.[0])
+            e.target.value = ''
+          }}
+        />
+      </label>
+      <Field label="Width (px)">
+        <NumberField value={d.width} onChange={(width) => set({ width })} />
+      </Field>
+      <Field label="Alt text">
+        <TextField value={d.alt ?? ''} placeholder="describe the image" onChange={(alt) => set({ alt })} />
+      </Field>
+      <p className="text-[10px] text-muted-foreground">
+        Stored on your device (embedded in the file) and exported to PDF.
+      </p>
+    </Group>
+  )
+}
+
 export const SECTIONS: Array<Section> = [
   { id: 'layout', appliesTo: isBox, Component: LayoutSection },
   { id: 'size', appliesTo: isBox, Component: SizeSpacingSection },
@@ -345,6 +392,7 @@ export const SECTIONS: Array<Section> = [
   { id: 'role', appliesTo: isBox, Component: RoleSection },
   { id: 'heading', appliesTo: (n) => n.kind === 'heading', Component: HeadingSection },
   { id: 'separator', appliesTo: (n) => n.kind === 'separator', Component: SeparatorSection },
+  { id: 'image', appliesTo: (n) => n.kind === 'image', Component: ImageSection },
   { id: 'typography', appliesTo: isStyleable, Component: TypographySection },
   { id: 'convert', appliesTo: (n) => n.kind === 'list' || n.kind === 'text', Component: ConvertSection },
 ]

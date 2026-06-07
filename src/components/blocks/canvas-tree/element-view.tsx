@@ -113,10 +113,36 @@ export function ElementView({
       const size = typeof el.data.size === 'number' ? el.data.size : tokens.space(4)
       return <div style={{ height: size }} />
     }
-    case 'image':
+    case 'image': {
+      const src = asText(el.data.src)
+      const width = typeof el.data.width === 'number' ? el.data.width : undefined
+      if (!src)
+        return (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 64,
+              width: width ?? 120,
+              borderRadius: 4,
+              border: '1px dashed #cbd5e1',
+              color: '#94a3b8',
+              fontSize: 11,
+              ...style,
+            }}
+          >
+            Image
+          </div>
+        )
       return (
-        <img src={asText(el.data.src)} alt={asText(el.data.alt)} style={{ maxWidth: '100%', ...style }} />
+        <img
+          src={src}
+          alt={asText(el.data.alt)}
+          style={{ maxWidth: '100%', width, borderRadius: 4, ...style }}
+        />
       )
+    }
     case 'icon':
       return <span style={style}>{asText(el.data.name)}</span>
     case 'button':
