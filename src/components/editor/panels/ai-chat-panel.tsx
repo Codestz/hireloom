@@ -5,10 +5,11 @@ import type { useBlockDoc } from '#/components/blocks'
 import { Button } from '#/components/ui/button'
 import { chatBuildCanvas } from '#/lib/ai/service'
 import { useAiReady } from '#/lib/ai/use-ai-ready'
-import { applyChatOps, canvasOutline, sectionTemplates } from '#/lib/canvas/chat-ops'
+import { applyChatOps, canvasOutline, opTargetIds, sectionTemplates } from '#/lib/canvas/chat-ops'
 import type { ChatOp } from '#/lib/canvas/chat-ops'
 import { documentIndex } from '#/lib/canvas/document-index'
 import type { SectionRef } from '#/lib/canvas/document-index'
+import { useAiHighlight } from '#/components/blocks/canvas-tree/ai-highlight'
 import { cn } from '#/lib/utils.ts'
 
 /**
@@ -59,6 +60,25 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
   const [mhi, setMhi] = useState(0)
   // Sticky focus: sections the conversation is scoped to (carry across messages until cleared).
   const [focus, setFocus] = useState<Array<SectionRef>>([])
+  const { setFocusedIds, setAffectedIds } = useAiHighlight()
+
+  // Mirror @-focus → green ring on the canvas.
+  useEffect(() => {
+    setFocusedIds(focus.map((s) => s.id))
+  }, [focus, setFocusedIds])
+
+  // Mirror the latest un-applied proposal's targets → amber "AI edit" ring on the canvas.
+  useEffect(() => {
+    const root = doc.canvas
+    const pending = [...messages].reverse().find((m) => m.ops && !m.applied)
+    setAffectedIds(root && pending?.ops ? opTargetIds(root, pending.ops) : [])
+  }, [messages, doc.canvas, setAffectedIds])
+
+  // Clear all AI highlights when leaving the chat.
+  useEffect(() => () => {
+    setFocusedIds([])
+    setAffectedIds([])
+  }, [setFocusedIds, setAffectedIds])
 
   const sections = doc.canvas ? documentIndex(doc.canvas) : []
   const candidates =

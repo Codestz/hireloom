@@ -145,6 +145,18 @@ function resolveContainer(root: CanvasBox, target: string | undefined): string {
   return byRole ? byRole.id : root.id
 }
 
+/** The node ids a set of ops will touch (add → its resolved target container) — for canvas preview. */
+export function opTargetIds(root: CanvasBox, ops: ReadonlyArray<ChatOp>): Array<string> {
+  const ids = new Set<string>()
+  for (const op of ops) {
+    if (op.op === 'add') ids.add(resolveContainer(root, op.target))
+    else if ((op.op === 'edit_text' || op.op === 'edit_list' || op.op === 'remove') && op.id && findNode(root, op.id)) {
+      ids.add(op.id)
+    }
+  }
+  return [...ids]
+}
+
 export function applyChatOps(
   root: CanvasBox,
   ops: ReadonlyArray<ChatOp>,

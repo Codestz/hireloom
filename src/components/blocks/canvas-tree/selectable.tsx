@@ -8,6 +8,7 @@ import { AiTextMenu } from '#/components/blocks/ai/ai-text-menu'
 import { AiEnabledContext } from '#/components/blocks/ai/ai-context'
 import { useBlockDocController } from '#/components/blocks/state/block-doc-context'
 import { SELECT_COLOR, useCanvasSelection } from './selection'
+import { AI_AFFECT_COLOR, AI_FOCUS_COLOR, useAiHighlight } from './ai-highlight'
 import { useDragState } from './drag-context'
 import { KIND_LABEL, asText } from './node-style'
 
@@ -162,6 +163,16 @@ export function Selectable({
       ? `1px ${lineStyle} ${color}80`
       : undefined
 
+  // AI canvas highlights (chat-driven): affected (amber, pending edit) wins over focused (green).
+  const { focusedIds, affectedIds } = useAiHighlight()
+  const affected = affectedIds.has(node.id)
+  const focused = focusedIds.has(node.id)
+  const boxShadow = affected
+    ? `0 0 0 2px ${AI_AFFECT_COLOR}, 0 0 0 7px ${AI_AFFECT_COLOR}26`
+    : focused
+      ? `0 0 0 2px ${AI_FOCUS_COLOR}, 0 0 0 7px ${AI_FOCUS_COLOR}22`
+      : undefined
+
   return (
     <div
       ref={setNodeRef}
@@ -181,9 +192,34 @@ export function Selectable({
         outline,
         outlineOffset: box ? 2 : 1,
         borderRadius: 2,
+        boxShadow,
         opacity: dragging ? 0.4 : undefined,
       }}
     >
+      {focused || affected ? (
+        <span
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            transform: 'translateY(-100%)',
+            zoom: 'var(--chrome-zoom)' as unknown as number,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 3,
+            background: affected ? AI_AFFECT_COLOR : AI_FOCUS_COLOR,
+            color: '#fff',
+            fontSize: 9,
+            lineHeight: 1.5,
+            padding: '1px 5px',
+            borderRadius: 4,
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+          }}
+        >
+          {affected ? '✦ AI edit' : '◎ focus'}
+        </span>
+      ) : null}
       {selected || hovered ? (
         <NodeChip
           node={node}

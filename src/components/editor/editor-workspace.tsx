@@ -6,6 +6,7 @@ import { EditorSidebar } from '#/components/editor/sidebar/editor-sidebar'
 import { ImportDialog } from '#/components/editor/dialogs/import-dialog'
 import { InspectorPanel } from '#/components/editor/inspector/inspector-panel'
 import { CanvasSelectionProvider } from '#/components/blocks/canvas-tree/selection'
+import { AiHighlightProvider } from '#/components/blocks/canvas-tree/ai-highlight'
 import { CanvasDndProvider } from '#/components/blocks/canvas-tree/canvas-dnd'
 import { CanvasKeyboard } from '#/components/blocks/canvas-tree/canvas-keyboard'
 import { MobileGate } from './mobile-gate'
@@ -40,6 +41,7 @@ export function EditorWorkspace({ record, autoImport }: EditorWorkspaceProps) {
         />
 
         <CanvasSelectionProvider>
+         <AiHighlightProvider>
          {canvasMode ? <CanvasKeyboard controller={editor.controller} /> : null}
          <CanvasDndProvider controller={editor.controller}>
           <div className="flex flex-1 overflow-hidden print:block print:overflow-visible">
@@ -73,6 +75,7 @@ export function EditorWorkspace({ record, autoImport }: EditorWorkspaceProps) {
             ) : null}
           </div>
          </CanvasDndProvider>
+         </AiHighlightProvider>
         </CanvasSelectionProvider>
       </div>
     </>
