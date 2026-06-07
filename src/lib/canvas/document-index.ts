@@ -52,9 +52,27 @@ function firstHeading(box: CanvasBox): CanvasNode | null {
   return null
 }
 
-/** A top-level box counts as a section when it has a role or a heading. */
+/** A box counts as a section when it carries a semantic role (set by decompose + the AI tools). */
 function isSection(node: CanvasNode): node is CanvasBox {
-  return isBox(node) && (node.role !== undefined || firstHeading(node) !== null)
+  return isBox(node) && node.role !== undefined
+}
+
+/**
+ * Every section box, found RECURSIVELY through layout wrappers (sidebar rows/columns, bands…),
+ * not just root's direct children — so addressing works for any structural layout. A role box is
+ * a section (we don't descend into it); a role-less box is a layout wrapper (we descend).
+ */
+function collectSectionBoxes(root: CanvasBox): Array<CanvasBox> {
+  const out: Array<CanvasBox> = []
+  const walk = (box: CanvasBox) => {
+    for (const c of box.children) {
+      if (!isBox(c)) continue
+      if (isSection(c)) out.push(c)
+      else walk(c)
+    }
+  }
+  walk(root)
+  return out
 }
 
 /** The address label for a section, IGNORING any stored name (used to (re)derive defaults). */
@@ -71,9 +89,9 @@ export function sectionLabel(box: CanvasBox): string {
   return box.name?.trim() || derivedName(box)
 }
 
-/** The addressable sections of a document (root's section children). */
+/** The addressable sections of a document (any layout). */
 export function documentIndex(root: CanvasBox): Array<SectionRef> {
-  return root.children.filter(isSection).map((box) => {
+  return collectSectionBoxes(root).map((box) => {
     const h = firstHeading(box)
     return {
       id: box.id,
@@ -121,8 +139,7 @@ function sectionEntries(section: CanvasBox): Array<CanvasBox> {
 /** Everything the chat can @-mention: each section, followed by its entries. */
 export function mentionTargets(root: CanvasBox): Array<MentionTarget> {
   const out: Array<MentionTarget> = []
-  for (const box of root.children) {
-    if (!isSection(box)) continue
+  for (const box of collectSectionBoxes(root)) {
     const name = sectionLabel(box)
     out.push({ id: box.id, label: name, kind: 'section', role: box.role })
     for (const entry of sectionEntries(box)) {
@@ -146,8 +163,7 @@ export function assignSectionNames(root: CanvasBox): void {
     used.add(name.toLowerCase())
     return name
   }
-  for (const box of root.children) {
-    if (!isSection(box)) continue
+  for (const box of collectSectionBoxes(root)) {
     box.name = unique(box.name?.trim() || derivedName(box))
   }
 }

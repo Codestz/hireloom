@@ -78,11 +78,51 @@ export function decompose(doc: BlockDoc, t: ResolvedTokens): CanvasBox {
     return box
   }
 
-  const children: Array<CanvasNode> = [headerBox()]
-  for (const section of doc.sections) children.push(sectionBox(section))
-  const root = makeBox('column', { gap: t.space(10) }, children)
+  const header = headerBox()
+  const sections = doc.sections.map(sectionBox)
+  const root = arrange(t, header, sections)
   assignSectionNames(root) // unique @-mention labels for every section
   return root
+}
+
+/** Roles that go in the side rail for the 'sidebar' layout (skills/credentials/short lists). */
+const SIDE_ROLES: ReadonlySet<string> = new Set([
+  'skills',
+  'languages',
+  'certifications',
+  'education',
+  'interests',
+  'awards',
+])
+
+/** Arrange the header + section boxes into the structural layout the template asks for. */
+function arrange(t: ResolvedTokens, header: CanvasBox, sections: Array<CanvasBox>): CanvasBox {
+  if (t.layout === 'sidebar') {
+    const side = sections.filter((s) => SIDE_ROLES.has(s.role ?? ''))
+    const main = sections.filter((s) => !SIDE_ROLES.has(s.role ?? ''))
+    const body = makeBox('row', { gap: t.space(10), align: 'start' }, [
+      makeBox('column', { gap: t.space(8), span: 8 }, main),
+      makeBox('column', { gap: t.space(8), span: 4 }, side),
+    ])
+    return makeBox('column', { gap: t.space(10) }, [header, body])
+  }
+  if (t.layout === 'band') {
+    tintHeaderBand(header, t)
+    return makeBox('column', { gap: t.space(10) }, [header, ...sections])
+  }
+  return makeBox('column', { gap: t.space(10) }, [header, ...sections])
+}
+
+/** Turn the header into a full-width accent band with white text. */
+function tintHeaderBand(header: CanvasBox, t: ResolvedTokens): void {
+  header.props.bg = t.accent
+  header.props.pad = t.space(8)
+  header.props.radius = 6
+  const recolor = (n: CanvasNode) => {
+    if (isBox(n)) n.children.forEach(recolor)
+    else n.style = { ...n.style, color: '#ffffff' }
+  }
+  header.children.forEach(recolor)
 }
 
 function sectionHeadingText(section: DocSection): string {

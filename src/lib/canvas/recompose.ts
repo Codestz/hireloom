@@ -188,17 +188,33 @@ const KNOWN_ROLES = new Set([
 ])
 
 /** Rebuild a BlockDoc (header + sections) from the canvas root, for export. */
-export function recompose(root: CanvasBox): BlockDoc {
-  const headerBox = root.children.find((c) => isBox(c) && c.role === 'header') as
-    | CanvasBox
-    | undefined
-  const header = recomposeHeader(headerBox ?? root)
-
-  const sections: Array<DocSection> = []
-  for (const child of root.children) {
-    if (!isBox(child) || !child.role || child.role === 'header') continue
-    const role = KNOWN_ROLES.has(child.role) ? child.role : 'custom'
-    sections.push(recomposeSection(child, role))
+/** Find the first box with a given role, recursively (handles nested layouts). */
+function findRoleBox(node: CanvasNode, role: string): CanvasBox | null {
+  if (!isBox(node)) return null
+  for (const c of node.children) {
+    if (isBox(c) && c.role === role) return c
+    const hit = findRoleBox(c, role)
+    if (hit) return hit
   }
+  return null
+}
+
+/** Collect role sections in document order, descending through role-less layout wrappers. */
+function collectRoleSections(box: CanvasBox, out: Array<DocSection>): void {
+  for (const c of box.children) {
+    if (!isBox(c)) continue
+    if (c.role && c.role !== 'header') {
+      const role = KNOWN_ROLES.has(c.role) ? c.role : 'custom'
+      out.push(recomposeSection(c, role))
+    } else if (!c.role) {
+      collectRoleSections(c, out) // a layout wrapper (sidebar row/column, band…) — descend
+    }
+  }
+}
+
+export function recompose(root: CanvasBox): BlockDoc {
+  const header = recomposeHeader(findRoleBox(root, 'header') ?? root)
+  const sections: Array<DocSection> = []
+  collectRoleSections(root, sections)
   return { header, sections }
 }

@@ -12,6 +12,7 @@ const tokens: ResolvedTokens = {
   fontBodyPdf: 'Helvetica',
   baseFontSize: 10,
   headerVariant: 'standard',
+  layout: 'single',
   space: (n) => n,
 }
 
@@ -105,5 +106,20 @@ describe('recompose (inverse of decompose)', () => {
   it('restores skills tags and certifications', () => {
     expect(item('skills')).toEqual({ tags: ['TypeScript', 'Go'] })
     expect(item('certifications')).toMatchObject({ name: 'Claude 101', issuer: 'Anthropic' })
+  })
+})
+
+/** Genericity: a non-single layout (sidebar nests sections in columns) must still round-trip. */
+describe('recompose across the sidebar layout', () => {
+  const back = recompose(decompose(doc(), { ...tokens, layout: 'sidebar' }))
+  const types = back.sections.map((s) => s.type).sort()
+
+  it('recovers every section despite the two-column nesting', () => {
+    expect(types).toEqual(['certifications', 'education', 'experience', 'skills'])
+    expect(back.header.name).toBe('Esteban Estrada')
+    expect(back.sections.find((s) => s.type === 'experience')?.items[0]?.data).toMatchObject({
+      title: 'Senior Software Engineer',
+      company: 'Recurly',
+    })
   })
 })
