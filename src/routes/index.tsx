@@ -37,7 +37,7 @@ function Home() {
   const navigate = useNavigate()
 
   function openImport() {
-    void navigate({ to: '/editor', search: { import: true } })
+    void navigate({ to: '/import' })
   }
 
   async function loadDemo() {
