@@ -26,7 +26,7 @@ import {
 } from './builders'
 
 export function decompose(doc: BlockDoc, t: ResolvedTokens): CanvasBox {
-  function sectionBox(section: DocSection): CanvasBox {
+  function sectionBox(section: DocSection, compact = false): CanvasBox {
     const children: Array<CanvasNode> = [sectionShell(t, sectionHeadingText(section))]
 
     if (section.type === 'custom') {
@@ -36,7 +36,7 @@ export function decompose(doc: BlockDoc, t: ResolvedTokens): CanvasBox {
       const tags = strArray(section.items.at(0)?.data.tags)
       if (tags.length) children.push(makeElement('list', { items: tags }))
     } else {
-      for (const item of section.items) children.push(entryFor(t, section.type, item.data))
+      for (const item of section.items) children.push(entryFor(t, section.type, item.data, compact))
     }
 
     const box = makeBox('column', { gap: t.space(5) }, children)
@@ -79,7 +79,10 @@ export function decompose(doc: BlockDoc, t: ResolvedTokens): CanvasBox {
   }
 
   const header = headerBox()
-  const sections = doc.sections.map(sectionBox)
+  // In the sidebar layout, side-rail sections live in a narrow column → build them compact (stacked
+  // heads) so title·date rows don't wrap. `arrange` then places them into the rail.
+  const sidebar = t.layout === 'sidebar'
+  const sections = doc.sections.map((s) => sectionBox(s, sidebar && SIDE_ROLES.has(s.type)))
   const root = arrange(t, header, sections)
   assignSectionNames(root) // unique @-mention labels for every section
   return root

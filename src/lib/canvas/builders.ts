@@ -83,10 +83,34 @@ export function headRow(
 }
 
 /**
+ * Stacked head for NARROW columns (the sidebar side rail): title on its own line, then a muted
+ * "subtitle · dates" line below — so nothing is forced into a space-between row that wraps.
+ */
+export function headStack(
+  t: ResolvedTokens,
+  title: Part,
+  subtitle: string,
+  start: string,
+  end: string,
+): CanvasNode {
+  const period = [start, end].filter((s) => s.trim() !== '').join(' – ')
+  const meta = [subtitle, period].filter((s) => s.trim() !== '')
+  const children: Array<CanvasNode> = [text(title.value, title.style)]
+  if (meta.length) children.push(text(meta.join(' · '), small(t)))
+  return makeBox('column', { gap: 0 }, children)
+}
+
+/**
  * Build one entry box for a section type (experience, education, certifications, …) from its
  * plain data. Mirrors the classic typed Layouts. Used by decompose AND the AI add-entry tools.
+ * `compact` stacks the head (for narrow side-rail columns) instead of the space-between row.
  */
-export function entryFor(t: ResolvedTokens, type: string, d: Record<string, unknown>): CanvasBox {
+export function entryFor(
+  t: ResolvedTokens,
+  type: string,
+  d: Record<string, unknown>,
+  compact = false,
+): CanvasBox {
   const children: Array<CanvasNode> = []
   const period = (d.period ?? {}) as { start?: unknown; end?: unknown }
   const start = str(period.start)
@@ -94,20 +118,22 @@ export function entryFor(t: ResolvedTokens, type: string, d: Record<string, unkn
   const bullets = (items: Array<string>) => {
     if (items.length) children.push(makeElement('list', { items }))
   }
+  const head = (title: Part, subtitle: string, s: string, e: string) =>
+    compact ? headStack(t, title, subtitle, s, e) : headRow(t, title, subtitle, s, e)
 
   switch (type) {
     case 'experience':
-      children.push(headRow(t, { value: str(d.title), style: { fontWeight: 700, color: INK } }, str(d.company), start, end))
+      children.push(head({ value: str(d.title), style: { fontWeight: 700, color: INK } }, str(d.company), start, end))
       if (str(d.location)) children.push(text(str(d.location), small(t)))
       bullets(strArray(d.bullets))
       break
     case 'volunteer':
-      children.push(headRow(t, { value: str(d.role), style: { fontWeight: 700, color: INK } }, str(d.organization), start, end))
+      children.push(head({ value: str(d.role), style: { fontWeight: 700, color: INK } }, str(d.organization), start, end))
       if (str(d.location)) children.push(text(str(d.location), small(t)))
       bullets(strArray(d.bullets))
       break
     case 'education':
-      children.push(headRow(t, { value: str(d.institution), style: { fontWeight: 700, color: INK } }, str(d.degree), start, end))
+      children.push(head({ value: str(d.institution), style: { fontWeight: 700, color: INK } }, str(d.degree), start, end))
       if (str(d.area)) children.push(text(str(d.area), small(t)))
       break
     case 'certifications': {
@@ -126,7 +152,7 @@ export function entryFor(t: ResolvedTokens, type: string, d: Record<string, unkn
       break
     }
     case 'awards':
-      children.push(headRow(t, { value: str(d.title), style: { fontWeight: 700, color: INK } }, str(d.awarder), str(d.date), ''))
+      children.push(head({ value: str(d.title), style: { fontWeight: 700, color: INK } }, str(d.awarder), str(d.date), ''))
       if (str(d.summary)) children.push(text(str(d.summary)))
       break
     case 'publications': {
