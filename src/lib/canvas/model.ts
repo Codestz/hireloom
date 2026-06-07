@@ -35,26 +35,6 @@ export type BoxAlign = 'start' | 'center' | 'end' | 'stretch' | 'baseline'
 export type BoxJustify = 'start' | 'center' | 'end' | 'between' | 'around'
 export type TextAlign = 'left' | 'center' | 'right' | 'justify'
 
-/**
- * Export/ATS semantic hint on a Box. Well-known values map to JSON-Resume collections;
- * any other string is a custom section. Layout stays free regardless of role.
- */
-export type NodeRole =
-  | 'header'
-  | 'summary'
-  | 'work'
-  | 'volunteer'
-  | 'education'
-  | 'projects'
-  | 'skills'
-  | 'languages'
-  | 'awards'
-  | 'certifications'
-  | 'publications'
-  | 'references'
-  | 'interests'
-  | 'custom'
-
 export interface BoxProps {
   /** How children are arranged. Defaults to 'flex'. */
   display?: BoxDisplay
@@ -141,10 +121,6 @@ export function isBox(node: CanvasNode): node is CanvasBox {
   return node.kind === 'box'
 }
 
-export function isElement(node: CanvasNode): node is CanvasElement {
-  return node.kind !== 'box'
-}
-
 /** True when a Box lays its children out in a horizontal row (flex + direction row). */
 export function isHorizontal(box: CanvasBox): boolean {
   return (box.props.display ?? 'flex') === 'flex' && box.props.direction === 'row'
@@ -179,9 +155,4 @@ export function makeElement(
   style?: ElementStyle,
 ): CanvasElement {
   return { id: newNodeId(kind), kind, data, ...(style ? { style } : {}) }
-}
-
-/** An empty starting document: one vertical root Box. */
-export function emptyCanvas(): CanvasDoc {
-  return { root: makeBox('column') }
 }

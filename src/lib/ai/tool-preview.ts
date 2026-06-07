@@ -1,10 +1,10 @@
 import { diffLines } from '#/lib/diff'
 import type { DiffLine } from '#/lib/diff'
 import { isBox } from '#/lib/canvas/model'
-import type { CanvasBox, CanvasNode } from '#/lib/canvas/model'
-import { findNode } from '#/lib/canvas/tree-ops'
+import type { CanvasNode } from '#/lib/canvas/model'
 import { entryFor } from '#/lib/canvas/builders'
 import type { ResolvedTokens } from '#/lib/templates'
+import { resolveSection } from './tools'
 import type { ToolCall } from './tool-engine'
 
 /**
@@ -39,16 +39,6 @@ function textLeaves(node: CanvasNode): Array<string> {
   return out
 }
 
-/** Resolve a section reference (id, role, or @-name) to its box. */
-function resolveSection(root: CanvasBox, ref: string): CanvasBox | null {
-  const byId = findNode(root, ref)
-  if (byId && isBox(byId)) return byId
-  const key = ref.toLowerCase()
-  for (const box of root.children) {
-    if (isBox(box) && (box.role === ref || box.name?.toLowerCase() === key)) return box
-  }
-  return null
-}
 
 export function toolDiffs(
   root: CanvasBox,

@@ -40,7 +40,8 @@ function defineTool<TSchema extends z.ZodTypeAny>(def: {
 }
 
 /** Resolve a section reference (node id, role, or @-name) to its box. */
-function resolveSection(root: CanvasBox, ref: string): CanvasBox | null {
+/** Resolve a section reference (id, role, or @-name) to its box. */
+export function resolveSection(root: CanvasBox, ref: string): CanvasBox | null {
   const byId = findNode(root, ref)
   if (byId && isBox(byId)) return byId
   const key = ref.toLowerCase()
