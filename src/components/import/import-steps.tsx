@@ -5,9 +5,10 @@ import {
   CheckIcon,
   FileJsonIcon,
   FileTextIcon,
-  LinkedinIcon,
   Loader2Icon,
 } from 'lucide-react'
+import type { ComponentType } from 'react'
+import { LinkedinIcon } from '#/components/icons'
 import { Button } from '#/components/ui/button'
 import { ScaledCanvasPreview } from '#/components/blocks/canvas-tree/scaled-canvas-preview'
 import { engineLabel } from '#/lib/ai/engine'
@@ -69,7 +70,7 @@ function DropCard({
   accept: string
   label: string
   hint: string
-  icon: typeof LinkedinIcon
+  icon: ComponentType<{ className?: string }>
   busy: boolean
   onPick: (file: File) => void
 }) {

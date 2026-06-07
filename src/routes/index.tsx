@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { ArrowRightIcon, GithubIcon, LinkedinIcon, ShieldCheckIcon } from 'lucide-react'
+import { ArrowRightIcon, ShieldCheckIcon } from 'lucide-react'
+import { GithubIcon, LinkedinIcon } from '#/components/icons'
 import { ThemeToggle } from '#/components/app/theme-toggle'
 import { Button } from '#/components/ui/button'
 import { Showcase } from '#/components/home/showcase'
