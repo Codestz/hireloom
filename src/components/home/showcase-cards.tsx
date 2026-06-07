@@ -14,7 +14,7 @@ export function AssistantCard() {
         <MessageSquareIcon className="size-3.5 text-primary" /> Assistant
       </div>
       <div className="self-end rounded-lg bg-primary px-2.5 py-1.5 text-xs text-primary-foreground">
-        Tighten my Recurly bullets
+        Tighten my HireLoom bullets
       </div>
       <div className="max-w-[88%] rounded-lg bg-muted px-2.5 py-1.5 text-xs">
         Here’s a tighter version — Apply to keep it.
