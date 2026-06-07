@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { db } from './db'
 import {
   createResume,
+  createResumeFromTemplate,
   deleteResume,
   duplicateResume,
   getOrCreateLatestResume,
@@ -27,6 +28,15 @@ describe('resume repository (IndexedDB)', () => {
     const list = await listResumes()
     expect(list).toHaveLength(1)
     expect(list[0].id).toBe(a.id)
+  })
+
+  it('createResumeFromTemplate seeds the sample + the template layout/theme', async () => {
+    const r = await createResumeFromTemplate('two-column')
+    expect(r.templateId).toBe('two-column')
+    expect(r.tokens.layout).toBe('sidebar')
+    expect(r.data.basics?.name).toBe('Alex Morgan')
+    const band = await createResumeFromTemplate('band')
+    expect(band.tokens.layout).toBe('band')
   })
 
   it('blank title falls back to a default', async () => {
