@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
+import { ArrowRightIcon } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import {
   Dialog,
@@ -18,7 +19,7 @@ import { TEMPLATES, templateTokens } from '#/lib/templates/presets'
 import { TEMPLATE_SAMPLE } from '#/lib/sample/template-sample'
 import { createResumeFromTemplate, resumeKeys } from '#/lib/db'
 
-const SCALE = 192 / 612 // card width / preview page width
+const SCALE = 224 / 612 // card width (w-56) / preview page width
 
 /**
  * Template gallery — each card is a LIVE render of the neutral sample decomposed with the
@@ -62,9 +63,9 @@ export function TemplatesGallery() {
             key={t.id}
             type="button"
             onClick={() => setPending({ id: t.id, label: t.label })}
-            className="group flex w-48 flex-col gap-2 text-left"
+            className="group flex w-56 flex-col overflow-hidden rounded-xl border border-border bg-card text-left shadow-sm transition-all hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl"
           >
-            <div className="relative aspect-[8.5/11] w-48 overflow-hidden rounded-lg border border-border bg-white shadow-sm ring-primary/40 transition-all group-hover:shadow-md group-hover:ring-2">
+            <div className="relative aspect-[8.5/11] overflow-hidden border-b border-border bg-white">
               <div
                 style={{
                   position: 'absolute',
@@ -78,8 +79,14 @@ export function TemplatesGallery() {
               >
                 <CanvasPreview root={root} tokens={tokens} />
               </div>
+              <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-foreground/25 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
+                <span className="mb-3 inline-flex items-center gap-1 rounded-full bg-background px-3 py-1 text-xs font-medium shadow-md">
+                  Use template
+                  <ArrowRightIcon className="size-3" />
+                </span>
+              </div>
             </div>
-            <div>
+            <div className="flex flex-col gap-0.5 p-3">
               <p className="text-sm font-medium">{t.label}</p>
               <p className="text-xs leading-snug text-muted-foreground">{t.description}</p>
             </div>

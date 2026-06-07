@@ -1,12 +1,5 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import {
-  ArrowRightIcon,
-  GaugeIcon,
-  GithubIcon,
-  LinkedinIcon,
-  ShieldCheckIcon,
-  SparklesIcon,
-} from 'lucide-react'
+import { ArrowRightIcon, GithubIcon, LinkedinIcon, ShieldCheckIcon } from 'lucide-react'
 import { ThemeToggle } from '#/components/app/theme-toggle'
 import { Button } from '#/components/ui/button'
 import { Showcase } from '#/components/home/showcase'
@@ -14,24 +7,6 @@ import { TemplatesGallery } from '#/components/home/templates-gallery'
 import { DEMO_RESUME, DEMO_TOKENS } from '#/lib/sample/demo-resume'
 
 export const Route = createFileRoute('/')({ component: Home })
-
-const FEATURES = [
-  {
-    icon: ShieldCheckIcon,
-    title: 'Own your data',
-    body: 'Everything lives in your browser. No account, no upload, no servers holding your career.',
-  },
-  {
-    icon: SparklesIcon,
-    title: 'On-device AI',
-    body: "Sharpen bullets with Chrome's built-in model. Your words never leave the machine.",
-  },
-  {
-    icon: GaugeIcon,
-    title: 'ATS-smart',
-    body: "Live keyword match against any job post, plus parse-safety checks recruiters' robots respect.",
-  },
-]
 
 function Home() {
   const navigate = useNavigate()
@@ -144,23 +119,6 @@ function Home() {
           </p>
         </div>
         <TemplatesGallery />
-      </section>
-
-      <section className="mx-auto w-full max-w-5xl px-6 pb-16">
-        <div className="grid gap-5 sm:grid-cols-3">
-          {FEATURES.map(({ icon: Icon, title, body }) => (
-            <div
-              key={title}
-              className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-md"
-            >
-              <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Icon className="size-5" />
-              </span>
-              <h3 className="text-sm font-semibold">{title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
-            </div>
-          ))}
-        </div>
       </section>
 
       <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 border-t border-border px-6 py-16 text-center">
