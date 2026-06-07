@@ -193,12 +193,21 @@ function AppearanceSection({ node, controller }: Ctx) {
 function RoleSection({ node, controller }: Ctx) {
   if (!isBox(node)) return null
   return (
-    <Group title="Role (export / ATS)" icon={TagIcon} defaultOpen={false}>
-      <SelectField
-        value={node.role ?? ''}
-        onChange={(role) => controller.onCanvasSetRole(node.id, role || undefined)}
-        options={ROLE_OPTIONS}
-      />
+    <Group title="Section" icon={TagIcon} defaultOpen={false}>
+      <Field label="Name (@-mention label)">
+        <TextField
+          value={node.name ?? ''}
+          placeholder="e.g. Experience"
+          onChange={(name) => controller.onCanvasRename(node.id, name || undefined)}
+        />
+      </Field>
+      <Field label="Role (export / ATS)">
+        <SelectField
+          value={node.role ?? ''}
+          onChange={(role) => controller.onCanvasSetRole(node.id, role || undefined)}
+          options={ROLE_OPTIONS}
+        />
+      </Field>
     </Group>
   )
 }

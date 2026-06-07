@@ -19,9 +19,10 @@ export async function chatBuildCanvas(
   history: ReadonlyArray<{ role: 'user' | 'assistant'; text: string }>,
   outline: string,
   templates = '',
+  focus = '',
 ): Promise<ChatResult> {
   const convo = history.map((m) => `${m.role.toUpperCase()}: ${m.text}`).join('\n')
-  const out = await enginePrompt(canvasChatPrompt(outline, templates, convo), CREATIVE)
+  const out = await enginePrompt(canvasChatPrompt(outline, templates, convo, focus), CREATIVE)
   const parsed = extractJson<{ reply?: unknown; ops?: unknown }>(out)
   const reply =
     typeof parsed?.reply === 'string' && parsed.reply.trim()

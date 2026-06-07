@@ -93,6 +93,16 @@ export function setBoxRole(
   })
 }
 
+/** Set a Box's @-mention name (undefined/empty clears it). No-op if `id` is not a Box. */
+export function setBoxName(root: CanvasBox, id: string, name: string | undefined): CanvasBox {
+  return mapNode(root, id, (node) => {
+    if (!isBox(node)) return node
+    const next = { ...node, name }
+    if (!name) delete (next as { name?: string }).name
+    return next
+  })
+}
+
 /** Shallow-merge into an element's `data`. No-op if `id` is a Box. */
 export function updateElementData(
   root: CanvasBox,

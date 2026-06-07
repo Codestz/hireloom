@@ -15,6 +15,7 @@ import {
   moveNode,
   removeNode,
   setBoxRole,
+  setBoxName,
   updateBoxProps,
   updateElementData,
   updateElementStyle,
@@ -436,6 +437,15 @@ export function useBlockDoc(initial: BlockDoc) {
     [mutateCanvas, bump],
   )
 
+  // Rename a section (its @-mention label). undefined/empty clears it.
+  const onCanvasRename = useCallback(
+    (id: string, name: string | undefined) => {
+      mutateCanvas((root) => setBoxName(root, id, name))
+      bump()
+    },
+    [mutateCanvas, bump],
+  )
+
   const onCanvasAddNode = useCallback(
     (containerId: string, node: CanvasNode) => {
       mutateCanvas((root) => addChild(root, containerId, node))
@@ -501,6 +511,7 @@ export function useBlockDoc(initial: BlockDoc) {
       onCanvasUpdateStyle,
       onCanvasUpdateProps,
       onCanvasSetRole,
+      onCanvasRename,
       onCanvasAddNode,
       onCanvasInsertNode,
       onCanvasRemoveNode,
@@ -529,6 +540,7 @@ export function useBlockDoc(initial: BlockDoc) {
       onCanvasUpdateStyle,
       onCanvasUpdateProps,
       onCanvasSetRole,
+      onCanvasRename,
       onCanvasAddNode,
       onCanvasInsertNode,
       onCanvasRemoveNode,

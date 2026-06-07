@@ -14,6 +14,7 @@ import {
 import type { ResumeRecord } from '#/lib/db'
 import { docToResume, resumeToDoc } from '#/lib/blocks/json-resume'
 import { decompose } from '#/lib/canvas/decompose'
+import { assignSectionNames } from '#/lib/canvas/document-index'
 import { recompose } from '#/lib/canvas/recompose'
 import { createEmptyResume, downloadResumeJson } from '#/lib/resume'
 import { slugify } from '#/lib/utils.ts'
@@ -36,7 +37,10 @@ export function useResumeEditor(record: ResumeRecord) {
   // lands — see the staged cutover plan.)
   const initialDoc = useMemo(() => {
     const d = resumeToDoc(record.data)
-    return d.canvas ? d : { ...d, canvas: decompose(d, resolveTokens(record.tokens)) }
+    if (!d.canvas) return { ...d, canvas: decompose(d, resolveTokens(record.tokens)) }
+    // Backfill stable @-mention names for canvases persisted before section identity existed.
+    assignSectionNames(d.canvas)
+    return d
   }, [record.data, record.tokens])
   const controller = useBlockDoc(initialDoc)
   const { doc } = controller

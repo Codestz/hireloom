@@ -19,12 +19,20 @@ Primitive subtree (for "add"):
 - Separator: { "kind":"separator","data":{ "variant":"dot"|"dash" } }   Divider: { "kind":"divider" }
 A new section = Box(role) with a Heading (level 2) then its content. When adding an item to an EXISTING section, COPY that section's entry template (shown below) exactly — same box nesting, separators, and heading levels — changing only the text. Set "target" to the section's role (e.g. "certifications").`
 
-/** Assemble the canvas-chat prompt from the document outline, entry templates, and conversation. */
-export function canvasChatPrompt(outline: string, templates: string, convo: string): string {
+/** Assemble the canvas-chat prompt from the outline, entry templates, @-focus, and conversation. */
+export function canvasChatPrompt(
+  outline: string,
+  templates: string,
+  convo: string,
+  focus = '',
+): string {
   const tmpl = templates.trim()
     ? `\n\nEXISTING ENTRY TEMPLATES — mirror these structures when adding a similar item:\n${templates}`
     : ''
-  return `${CHAT_SCHEMA}\n\nDOCUMENT OUTLINE:\n${outline}${tmpl}\n\nCONVERSATION:\n${convo}\nASSISTANT (JSON only):`
+  const foc = focus.trim()
+    ? `\n\nFOCUS — the user @-mentioned these sections; scope changes to them unless the request clearly applies elsewhere:\n${focus}`
+    : ''
+  return `${CHAT_SCHEMA}\n\nDOCUMENT OUTLINE:\n${outline}${tmpl}${foc}\n\nCONVERSATION:\n${convo}\nASSISTANT (JSON only):`
 }
 
 /** Legacy typed-section chat prompt (to be retired when the chat moves fully to tools). */

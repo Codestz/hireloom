@@ -7,6 +7,8 @@ import { chatBuildCanvas } from '#/lib/ai/service'
 import { useAiReady } from '#/lib/ai/use-ai-ready'
 import { applyChatOps, canvasOutline, sectionTemplates } from '#/lib/canvas/chat-ops'
 import type { ChatOp } from '#/lib/canvas/chat-ops'
+import { documentIndex } from '#/lib/canvas/document-index'
+import type { SectionRef } from '#/lib/canvas/document-index'
 import { cn } from '#/lib/utils.ts'
 
 /**
@@ -51,6 +53,16 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
+  const taRef = useRef<HTMLTextAreaElement>(null)
+  // @-mention autocomplete: mq = the active "@query" (null when not typing one).
+  const [mq, setMq] = useState<string | null>(null)
+  const [mhi, setMhi] = useState(0)
+
+  const sections = doc.canvas ? documentIndex(doc.canvas) : []
+  const candidates =
+    mq === null
+      ? []
+      : sections.filter((s) => s.name.toLowerCase().includes(mq.toLowerCase())).slice(0, 6)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' })
@@ -60,6 +72,39 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
       /* private mode — chat just won't persist */
     }
   }, [messages])
+
+  /** Sections @-mentioned in a message (longest-name-first so prefixes don't double-match). */
+  function referencedSections(msg: string): Array<SectionRef> {
+    let text = msg
+    const out: Array<SectionRef> = []
+    for (const s of [...sections].sort((a, b) => b.name.length - a.name.length)) {
+      const tok = `@${s.name}`
+      if (text.includes(tok)) {
+        out.push(s)
+        text = text.split(tok).join(' ')
+      }
+    }
+    return out
+  }
+
+  /** Replace the active "@query" with the chosen section's "@Name ". */
+  function pickMention(s: SectionRef | undefined) {
+    const ta = taRef.current
+    if (!s || !ta) return
+    const caret = ta.selectionStart
+    const m = /(?:^|\s)@(\S*)$/.exec(input.slice(0, caret))
+    if (!m) return
+    const start = caret - (m[1].length + 1)
+    const before = input.slice(0, start)
+    const insert = `@${s.name} `
+    setInput(before + insert + input.slice(caret))
+    setMq(null)
+    requestAnimationFrame(() => {
+      ta.focus()
+      const pos = (before + insert).length
+      ta.setSelectionRange(pos, pos)
+    })
+  }
 
   async function send(text: string) {
     const msg = text.trim()
@@ -72,10 +117,14 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
       .map((m) => ({ role: m.role, text: m.text }))
     setMessages((m) => [...m, { role: 'user', text: msg }, { role: 'assistant', text: '', pending: true }])
     try {
+      const focus = referencedSections(msg)
+        .map((s) => `"${s.name}" (${s.id})`)
+        .join(', ')
       const res = await chatBuildCanvas(
         [...history, { role: 'user', text: msg }],
         root ? canvasOutline(root) : '(empty document)',
         root ? sectionTemplates(root) : '',
+        focus,
       )
       // Dry-run to preview what would change (without mutating).
       const summary = root && res.ops.length ? applyChatOps(root, res.ops).summary : []
@@ -204,23 +253,77 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
       </div>
 
       <form
-        className="flex items-end gap-1.5 border-t border-border p-2"
+        className="relative flex items-end gap-1.5 border-t border-border p-2"
         onSubmit={(e) => {
           e.preventDefault()
           void send(input)
         }}
       >
+        {mq !== null && candidates.length > 0 ? (
+          <div className="absolute right-2 bottom-full left-2 mb-1 overflow-hidden rounded-md border border-border bg-card shadow-md">
+            <p className="px-2.5 pt-1.5 pb-1 text-[10px] tracking-wider text-muted-foreground uppercase">
+              Mention a section
+            </p>
+            {candidates.map((s, i) => (
+              <button
+                key={s.id}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  pickMention(s)
+                }}
+                className={cn(
+                  'flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-xs',
+                  i === mhi ? 'bg-muted' : 'hover:bg-muted/60',
+                )}
+              >
+                <span className="font-medium">@{s.name}</span>
+                {s.role ? <span className="text-[10px] text-muted-foreground">{s.role}</span> : null}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <textarea
+          ref={taRef}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value
+            setInput(v)
+            const caret = e.target.selectionStart
+            const m = /(?:^|\s)@(\S*)$/.exec(v.slice(0, caret))
+            setMq(m ? m[1] : null)
+            setMhi(0)
+          }}
           onKeyDown={(e) => {
+            if (mq !== null && candidates.length > 0) {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault()
+                setMhi((h) => (h + 1) % candidates.length)
+                return
+              }
+              if (e.key === 'ArrowUp') {
+                e.preventDefault()
+                setMhi((h) => (h - 1 + candidates.length) % candidates.length)
+                return
+              }
+              if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault()
+                pickMention(candidates[mhi] ?? candidates[0])
+                return
+              }
+              if (e.key === 'Escape') {
+                e.preventDefault()
+                setMq(null)
+                return
+              }
+            }
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
               void send(input)
             }
           }}
           rows={1}
-          placeholder="Ask to add or edit a section…"
+          placeholder="Ask to add or edit a section… (@ to mention one)"
           className="max-h-28 min-h-8 flex-1 resize-none rounded-md border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-primary/50"
         />
         <Button type="submit" size="sm" className="size-8 shrink-0 p-0" disabled={busy || !input.trim()}>
