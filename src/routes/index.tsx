@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { ThemeToggle } from '#/components/app/theme-toggle'
 import { Button } from '#/components/ui/button'
+import { Showcase } from '#/components/home/showcase'
 import { TemplatesGallery } from '#/components/home/templates-gallery'
 import { DEMO_RESUME, DEMO_TOKENS } from '#/lib/sample/demo-resume'
 
@@ -131,6 +132,8 @@ function Home() {
           </button>
         </div>
       </main>
+
+      <Showcase />
 
       <section id="templates" className="mx-auto w-full max-w-5xl scroll-mt-20 px-6 pb-16">
         <div className="mb-6 flex flex-col items-center gap-1.5 text-center">
