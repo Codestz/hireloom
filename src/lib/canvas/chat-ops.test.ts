@@ -38,6 +38,14 @@ describe('applyChatOps', () => {
     expect((removed.children[0] as CanvasBox).children).toHaveLength(0)
   })
 
+  it('rewrites a list via edit_list', () => {
+    const list = makeElement('list', { items: ['old one', 'old two'] })
+    const r = makeBox('column', {}, [makeBox('column', {}, [list])])
+    const next = applyChatOps(r, [{ op: 'edit_list', id: list.id, items: ['New one', 'New two', 'New three'] }]).root
+    const edited = (next.children[0] as CanvasBox).children[0] as { data: { items: string[] } }
+    expect(edited.data.items).toEqual(['New one', 'New two', 'New three'])
+  })
+
   it('ignores junk add nodes (sanitizer rejects) and never removes the root', () => {
     const r = root()
     expect(applyChatOps(r, [{ op: 'add', target: 'page', node: { kind: 'evil' } }]).root.children).toHaveLength(1)

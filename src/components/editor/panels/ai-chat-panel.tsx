@@ -1,4 +1,4 @@
-import { ArrowUpIcon, AtSignIcon, CheckIcon, Loader2Icon, SparklesIcon } from 'lucide-react'
+import { ArrowUpIcon, AtSignIcon, CheckIcon, Loader2Icon, SparklesIcon, XIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { useBlockDoc } from '#/components/blocks'
@@ -57,6 +57,8 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
   // @-mention autocomplete: mq = the active "@query" (null when not typing one).
   const [mq, setMq] = useState<string | null>(null)
   const [mhi, setMhi] = useState(0)
+  // Sticky focus: sections the conversation is scoped to (carry across messages until cleared).
+  const [focus, setFocus] = useState<Array<SectionRef>>([])
 
   const sections = doc.canvas ? documentIndex(doc.canvas) : []
   const candidates =
@@ -118,14 +120,16 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
       .map((m) => ({ role: m.role, text: m.text }))
     setMessages((m) => [...m, { role: 'user', text: msg }, { role: 'assistant', text: '', pending: true }])
     try {
-      const focus = referencedSections(msg)
-        .map((s) => `"${s.name}" (${s.id})`)
-        .join(', ')
+      // Sticky focus: a fresh @-mention re-scopes; otherwise keep the pinned sections.
+      const mentioned = referencedSections(msg)
+      const active = mentioned.length ? mentioned : focus
+      if (mentioned.length) setFocus(mentioned)
+      const focusStr = active.map((s) => `"${s.name}" (${s.id})`).join(', ')
       const res = await chatBuildCanvas(
         [...history, { role: 'user', text: msg }],
         root ? canvasOutline(root) : '(empty document)',
         root ? sectionTemplates(root) : '',
-        focus,
+        focusStr,
       )
       // Dry-run to preview what would change (without mutating).
       const summary = root && res.ops.length ? applyChatOps(root, res.ops).summary : []
@@ -288,6 +292,28 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
                   </span>
                 ) : null}
               </button>
+            ))}
+          </div>
+        ) : null}
+
+        {focus.length > 0 ? (
+          <div className="mb-1.5 flex flex-wrap items-center gap-1">
+            <span className="text-[10px] text-muted-foreground">Talking about</span>
+            {focus.map((s) => (
+              <span
+                key={s.id}
+                className="flex items-center gap-1 rounded-full bg-primary/10 py-0.5 pr-1 pl-2 text-[11px] font-medium text-primary"
+              >
+                @{s.name}
+                <button
+                  type="button"
+                  aria-label={`Stop focusing ${s.name}`}
+                  onClick={() => setFocus((f) => f.filter((x) => x.id !== s.id))}
+                  className="flex size-3.5 items-center justify-center rounded-full hover:bg-primary/20"
+                >
+                  <XIcon className="size-2.5" />
+                </button>
+              </span>
             ))}
           </div>
         ) : null}

@@ -10,13 +10,15 @@ import { sanitizeAiNode } from './ai-compose'
  */
 
 export interface ChatOp {
-  op: 'add' | 'edit_text' | 'remove' | 'answer'
+  op: 'add' | 'edit_text' | 'edit_list' | 'remove' | 'answer'
   /** add: a box role ("skills"…), a node id, or "page". */
   target?: string
-  /** edit_text / remove: a node id from the outline. */
+  /** edit_text / edit_list / remove: a node id from the outline. */
   id?: string
   /** edit_text: the new text. */
   text?: string
+  /** edit_list: the rewritten bullet/skill items. */
+  items?: Array<string>
   /** add: a raw primitive subtree (sanitized here). */
   node?: unknown
 }
@@ -164,6 +166,13 @@ export function applyChatOps(
       if (target && !isBox(target)) {
         r = updateElementData(r, op.id, { text: String(op.text ?? '') })
         summary.push(`Edit ${nodeLabel(target)}`)
+      }
+    } else if (op.op === 'edit_list' && op.id && Array.isArray(op.items)) {
+      const target = findNode(r, op.id)
+      if (target && !isBox(target) && target.kind === 'list') {
+        const items = op.items.map((x) => String(x))
+        r = updateElementData(r, op.id, { items })
+        summary.push(`Rewrite list (${items.length} items)`)
       }
     } else if (op.op === 'remove' && op.id && op.id !== r.id) {
       const target = findNode(r, op.id)
