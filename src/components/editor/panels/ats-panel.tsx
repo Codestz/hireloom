@@ -11,48 +11,28 @@ import { resumeText } from '#/lib/blocks/doc-text'
 import { canvasText, findSummaryNode } from '#/lib/canvas/canvas-text'
 import { documentIndex } from '#/lib/canvas/document-index'
 import { findNode } from '#/lib/canvas/tree-ops'
+import { MatchResult } from './ats-result'
+import { useAiAction } from './use-ai-action'
 
 /**
  * ATS panel — paste a job description, get a deterministic keyword match against YOUR CANVAS
  * (the source of truth): score + matched/missing + which sections cover the keywords, plus AI
  * gap suggestions and one-click "Tailor my summary to this job" (applied to the canvas summary).
+ * The match display lives in ats-result.tsx; the gap/letter AI calls go through useAiAction.
  */
 type Controller = ReturnType<typeof useBlockDoc>
-
-function Chips({ terms, tone }: { terms: Array<string>; tone: 'ok' | 'miss' }) {
-  return (
-    <div className="flex flex-wrap gap-1">
-      {terms.map((t) => (
-        <span
-          key={t}
-          className={
-            tone === 'ok'
-              ? 'rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary'
-              : 'rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] text-amber-700'
-          }
-        >
-          {t}
-        </span>
-      ))}
-    </div>
-  )
-}
 
 export function AtsPanel({ controller }: { controller: Controller }) {
   const { doc } = controller
   const [jd, setJd] = useState('')
   const canAi = useAiReady()
-  const [aiText, setAiText] = useState<string | null>(null)
-  const [aiLoading, setAiLoading] = useState(false)
 
-  // Tailor-to-JD
+  // Tailor-to-JD is special (it also projects the new score), so it keeps its own state.
   const [tailored, setTailored] = useState('')
   const [tailoring, setTailoring] = useState(false)
   const [afterScore, setAfterScore] = useState<number | null>(null)
-
-  // Cover letter (JD-specific — lives here, not in a generic studio)
-  const [letter, setLetter] = useState('')
-  const [letterBusy, setLetterBusy] = useState(false)
+  const gaps = useAiAction()
+  const letter = useAiAction()
 
   const text = useMemo(() => (doc.canvas ? canvasText(doc.canvas) : resumeText(doc)), [doc])
   const result = useMemo(
@@ -75,33 +55,18 @@ export function AtsPanel({ controller }: { controller: Controller }) {
       .sort((a, b) => b.hits - a.hits)
   }, [doc.canvas, result])
   const scoreColor =
-    !result || result.score >= 60
-      ? '#2f6b4f'
-      : result.score >= 35
-        ? '#b45309'
-        : '#be123c'
+    !result || result.score >= 60 ? '#2f6b4f' : result.score >= 35 ? '#b45309' : '#be123c'
 
-  async function assist() {
+  function assist() {
     if (!result) return
-    setAiLoading(true)
-    setAiText(null)
-    try {
-      const missing = result.missing
-        .map((m) => m.term)
-        .slice(0, 12)
-        .join(', ')
-      const prompt = `I'm tailoring my resume to a job posting. These keywords from the job description are missing from my resume: ${missing}.
+    const missing = result.missing.map((m) => m.term).slice(0, 12).join(', ')
+    const prompt = `I'm tailoring my resume to a job posting. These keywords from the job description are missing from my resume: ${missing}.
 
 My resume:
 ${text.slice(0, 2000)}
 
 For each missing keyword, give ONE short line: either note I likely already cover it with a synonym (name the synonym), or suggest a concise resume phrase I could add. Be specific and honest — never invent experience I don't show.`
-      setAiText(await enginePrompt(prompt))
-    } catch {
-      toast.error('The AI request failed — check AI settings.')
-    } finally {
-      setAiLoading(false)
-    }
+    void gaps.run(() => enginePrompt(prompt))
   }
 
   async function tailor() {
@@ -119,18 +84,6 @@ For each missing keyword, give ONE short line: either note I likely already cove
       toast.error('The AI request failed — check AI settings.')
     } finally {
       setTailoring(false)
-    }
-  }
-
-  async function genLetter() {
-    setLetterBusy(true)
-    setLetter('')
-    try {
-      await generateCoverLetter(text, jd, setLetter)
-    } catch {
-      toast.error('The AI request failed — check AI settings.')
-    } finally {
-      setLetterBusy(false)
     }
   }
 
@@ -167,69 +120,17 @@ For each missing keyword, give ONE short line: either note I likely already cove
 
       {result ? (
         <>
-          <div className="flex items-baseline gap-2">
-            <span
-              className="text-3xl font-semibold tabular-nums"
-              style={{ color: scoreColor }}
-            >
-              {result.score}%
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {result.matched.length} of{' '}
-              {result.matched.length + result.missing.length} keywords present
-            </span>
-          </div>
-
-          {result.missing.length ? (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-                Missing ({result.missing.length})
-              </span>
-              <Chips terms={result.missing.map((k) => k.term)} tone="miss" />
-            </div>
-          ) : null}
-
-          {result.matched.length ? (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-                Matched ({result.matched.length})
-              </span>
-              <Chips terms={result.matched.map((k) => k.term)} tone="ok" />
-            </div>
-          ) : null}
-
-          {coverage.length ? (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-                Coverage by section
-              </span>
-              {coverage.map((s) => (
-                <div key={s.name} className="flex items-center justify-between text-[11px]">
-                  <span className="text-foreground/90">{s.name}</span>
-                  <span className="text-muted-foreground">
-                    {s.hits} keyword{s.hits === 1 ? '' : 's'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <MatchResult result={result} coverage={coverage} scoreColor={scoreColor} />
 
           {canAi ? (
             <div className="flex flex-col gap-2 border-t border-border pt-3">
-              <Button
-                size="sm"
-                onClick={tailor}
-                disabled={tailoring}
-                className="justify-start"
-              >
+              <Button size="sm" onClick={tailor} disabled={tailoring} className="justify-start">
                 <WandSparklesIcon data-icon="inline-start" />
                 {tailoring ? 'Tailoring…' : 'Tailor my summary to this job'}
               </Button>
               {tailored ? (
                 <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-2">
-                  <p className="text-xs leading-relaxed whitespace-pre-wrap text-foreground/90">
-                    {tailored}
-                  </p>
+                  <p className="text-xs leading-relaxed whitespace-pre-wrap text-foreground/90">{tailored}</p>
                   {afterScore !== null ? (
                     <p className="text-[11px] text-muted-foreground">
                       Projected match:{' '}
@@ -240,11 +141,7 @@ For each missing keyword, give ONE short line: either note I likely already cove
                   ) : null}
                   {!tailoring ? (
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className="h-6 px-2 text-[11px]"
-                        onClick={applyTailored}
-                      >
+                      <Button size="sm" className="h-6 px-2 text-[11px]" onClick={applyTailored}>
                         Apply
                       </Button>
                       <Button
@@ -267,36 +164,36 @@ For each missing keyword, give ONE short line: either note I likely already cove
                 size="sm"
                 variant="outline"
                 onClick={assist}
-                disabled={aiLoading || !result.missing.length}
+                disabled={gaps.busy || !result.missing.length}
                 className="justify-start"
               >
                 <SparklesIcon data-icon="inline-start" />
-                {aiLoading ? 'Thinking…' : 'AI suggestions for gaps'}
+                {gaps.busy ? 'Thinking…' : 'AI suggestions for gaps'}
               </Button>
-              {aiText ? (
+              {gaps.output ? (
                 <div className="rounded-md border border-border bg-muted/40 p-2 text-xs leading-relaxed whitespace-pre-wrap">
-                  {aiText}
+                  {gaps.output}
                 </div>
               ) : null}
 
               <Button
                 size="sm"
                 variant="outline"
-                onClick={genLetter}
-                disabled={letterBusy}
+                onClick={() => void letter.run((set) => generateCoverLetter(text, jd, set))}
+                disabled={letter.busy}
                 className="justify-start"
               >
                 <WandSparklesIcon data-icon="inline-start" />
-                {letterBusy ? 'Writing…' : 'Draft a cover letter'}
+                {letter.busy ? 'Writing…' : 'Draft a cover letter'}
               </Button>
-              {letter ? (
+              {letter.output ? (
                 <div className="flex flex-col gap-1.5 rounded-md border border-border bg-card p-2">
-                  <p className="text-xs leading-relaxed whitespace-pre-wrap text-foreground/90">{letter}</p>
-                  {!letterBusy ? (
+                  <p className="text-xs leading-relaxed whitespace-pre-wrap text-foreground/90">{letter.output}</p>
+                  {!letter.busy ? (
                     <button
                       type="button"
                       onClick={() => {
-                        void navigator.clipboard.writeText(letter)
+                        void navigator.clipboard.writeText(letter.output)
                         toast.success('Cover letter copied')
                       }}
                       className="self-start text-[11px] text-muted-foreground transition-colors hover:text-foreground"
