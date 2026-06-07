@@ -92,7 +92,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
   const candidates =
     mq === null
       ? []
-      : targets.filter((t) => t.label.toLowerCase().includes(mq.toLowerCase())).slice(0, 8)
+      : targets.filter((t) => t.label.toLowerCase().includes(mq.toLowerCase())).slice(0, 40)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' })
@@ -330,7 +330,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
         }}
       >
         {mq !== null && candidates.length > 0 ? (
-          <div className="absolute right-2 bottom-full left-2 mb-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+          <div className="absolute right-2 bottom-full left-2 mb-1 max-h-72 overflow-y-auto rounded-lg border border-border bg-card shadow-lg">
             <p className="px-2.5 pt-2 pb-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
               Mention a section or entry
             </p>
