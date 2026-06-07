@@ -9,6 +9,7 @@ import { CanvasSelectionProvider } from '#/components/blocks/canvas-tree/selecti
 import { CanvasDndProvider } from '#/components/blocks/canvas-tree/canvas-dnd'
 import { CanvasKeyboard } from '#/components/blocks/canvas-tree/canvas-keyboard'
 import { MobileGate } from './mobile-gate'
+import { ResizableSidebar } from './resizable-sidebar'
 import { useResumeEditor } from './use-resume-editor'
 
 /**
@@ -42,7 +43,7 @@ export function EditorWorkspace({ record, autoImport }: EditorWorkspaceProps) {
          {canvasMode ? <CanvasKeyboard controller={editor.controller} /> : null}
          <CanvasDndProvider controller={editor.controller}>
           <div className="flex flex-1 overflow-hidden print:block print:overflow-visible">
-            <aside className="hidden w-[340px] shrink-0 border-r border-border md:block print:hidden">
+            <ResizableSidebar>
               <EditorSidebar
                 title={record.title}
                 controller={editor.controller}
@@ -55,7 +56,7 @@ export function EditorWorkspace({ record, autoImport }: EditorWorkspaceProps) {
                 onExportJson={editor.exportJson}
                 onReset={editor.resetResume}
               />
-            </aside>
+            </ResizableSidebar>
 
             <main className="min-w-0 flex-1">
               <BlockCanvas

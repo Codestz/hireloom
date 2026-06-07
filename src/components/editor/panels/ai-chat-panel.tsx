@@ -1,4 +1,4 @@
-import { ArrowUpIcon, CheckIcon, Loader2Icon, SparklesIcon } from 'lucide-react'
+import { ArrowUpIcon, AtSignIcon, CheckIcon, Loader2Icon, SparklesIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { useBlockDoc } from '#/components/blocks'
@@ -111,6 +111,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
     if (!msg || busy) return
     const root = doc.canvas
     setInput('')
+    if (taRef.current) taRef.current.style.height = 'auto' // collapse the grown composer
     setBusy(true)
     const history = messages
       .filter((m) => !m.pending)
@@ -253,15 +254,15 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
       </div>
 
       <form
-        className="relative flex items-end gap-1.5 border-t border-border p-2"
+        className="relative border-t border-border p-2"
         onSubmit={(e) => {
           e.preventDefault()
           void send(input)
         }}
       >
         {mq !== null && candidates.length > 0 ? (
-          <div className="absolute right-2 bottom-full left-2 mb-1 overflow-hidden rounded-md border border-border bg-card shadow-md">
-            <p className="px-2.5 pt-1.5 pb-1 text-[10px] tracking-wider text-muted-foreground uppercase">
+          <div className="absolute right-2 bottom-full left-2 mb-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+            <p className="px-2.5 pt-2 pb-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
               Mention a section
             </p>
             {candidates.map((s, i) => (
@@ -273,62 +274,93 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
                   pickMention(s)
                 }}
                 className={cn(
-                  'flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-xs',
-                  i === mhi ? 'bg-muted' : 'hover:bg-muted/60',
+                  'flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left text-xs',
+                  i === mhi ? 'bg-primary/10 text-foreground' : 'hover:bg-muted/60',
                 )}
               >
-                <span className="font-medium">@{s.name}</span>
-                {s.role ? <span className="text-[10px] text-muted-foreground">{s.role}</span> : null}
+                <span className="flex items-center gap-1.5 font-medium">
+                  <AtSignIcon className="size-3 text-primary" />
+                  {s.name}
+                </span>
+                {s.role ? (
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    {s.role}
+                  </span>
+                ) : null}
               </button>
             ))}
           </div>
         ) : null}
-        <textarea
-          ref={taRef}
-          value={input}
-          onChange={(e) => {
-            const v = e.target.value
-            setInput(v)
-            const caret = e.target.selectionStart
-            const m = /(?:^|\s)@(\S*)$/.exec(v.slice(0, caret))
-            setMq(m ? m[1] : null)
-            setMhi(0)
-          }}
-          onKeyDown={(e) => {
-            if (mq !== null && candidates.length > 0) {
-              if (e.key === 'ArrowDown') {
-                e.preventDefault()
-                setMhi((h) => (h + 1) % candidates.length)
-                return
+
+        <div className="flex flex-col rounded-xl border border-border bg-background transition-colors focus-within:border-primary/60 focus-within:ring-1 focus-within:ring-primary/20">
+          <textarea
+            ref={taRef}
+            value={input}
+            onChange={(e) => {
+              const v = e.target.value
+              setInput(v)
+              const el = e.target
+              el.style.height = 'auto'
+              el.style.height = `${Math.min(el.scrollHeight, 176)}px`
+              const caret = el.selectionStart
+              const m = /(?:^|\s)@(\S*)$/.exec(v.slice(0, caret))
+              setMq(m ? m[1] : null)
+              setMhi(0)
+            }}
+            onKeyDown={(e) => {
+              if (mq !== null && candidates.length > 0) {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  setMhi((h) => (h + 1) % candidates.length)
+                  return
+                }
+                if (e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  setMhi((h) => (h - 1 + candidates.length) % candidates.length)
+                  return
+                }
+                if (e.key === 'Enter' || e.key === 'Tab') {
+                  e.preventDefault()
+                  pickMention(candidates[mhi] ?? candidates[0])
+                  return
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  setMq(null)
+                  return
+                }
               }
-              if (e.key === 'ArrowUp') {
+              if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
-                setMhi((h) => (h - 1 + candidates.length) % candidates.length)
-                return
+                void send(input)
               }
-              if (e.key === 'Enter' || e.key === 'Tab') {
-                e.preventDefault()
-                pickMention(candidates[mhi] ?? candidates[0])
-                return
-              }
-              if (e.key === 'Escape') {
-                e.preventDefault()
-                setMq(null)
-                return
-              }
-            }
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              void send(input)
-            }
-          }}
-          rows={1}
-          placeholder="Ask to add or edit a section… (@ to mention one)"
-          className="max-h-28 min-h-8 flex-1 resize-none rounded-md border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-primary/50"
-        />
-        <Button type="submit" size="sm" className="size-8 shrink-0 p-0" disabled={busy || !input.trim()}>
-          {busy ? <Loader2Icon className="size-4 animate-spin" /> : <ArrowUpIcon className="size-4" />}
-        </Button>
+            }}
+            rows={2}
+            placeholder="Ask to add or edit a section…"
+            className="max-h-44 w-full resize-none bg-transparent px-3 py-2.5 text-xs leading-relaxed outline-none placeholder:text-muted-foreground"
+          />
+          <div className="flex items-center justify-between gap-2 px-2 pb-2">
+            <span className="flex items-center gap-1 truncate pl-1 text-[10px] text-muted-foreground">
+              <AtSignIcon className="size-3" />
+              mention · ⏎ send · ⇧⏎ new line
+            </span>
+            <Button
+              type="submit"
+              size="sm"
+              className="h-7 gap-1 px-3 text-[11px]"
+              disabled={busy || !input.trim()}
+            >
+              {busy ? (
+                <Loader2Icon className="size-3.5 animate-spin" />
+              ) : (
+                <>
+                  Send
+                  <ArrowUpIcon className="size-3.5" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </form>
     </div>
   )
