@@ -4,7 +4,7 @@ import type { CanvasBox } from '#/lib/canvas/model'
 import { addChild, findNode, moveNode, removeNode, updateElementData } from '#/lib/canvas/tree-ops'
 import { entryFor, sectionShell } from '#/lib/canvas/builders'
 import { assignSectionNames } from '#/lib/canvas/document-index'
-import { transformText } from '#/lib/ai/service'
+import { transformText } from '#/lib/ai/features/transform'
 import type { ResolvedTokens } from '#/lib/templates'
 
 /**

@@ -34,7 +34,15 @@ function nodeLabel(n: CanvasNode): string {
   return n.kind
 }
 
-/** Compact outline of the tree for the model — each line carries the node id to reference. */
+const oneLine = (s: string, n = 220): string => {
+  const t = s.replace(/\s+/g, ' ').trim()
+  return t.length > n ? `${t.slice(0, n)}…` : t
+}
+
+/**
+ * Outline of the tree for the model — each line carries the node id to reference, AND the actual
+ * content (full-ish text + list items) so the AI can rewrite/edit without asking for it.
+ */
 export function canvasOutline(root: CanvasBox): string {
   const lines: Array<string> = []
   const walk = (n: CanvasNode, depth: number) => {
@@ -44,15 +52,17 @@ export function canvasOutline(root: CanvasBox): string {
       lines.push(`${pad}- ${tag} (${n.id})`)
       for (const c of n.children) walk(c, depth + 1)
     } else if (n.kind === 'heading' || n.kind === 'text') {
-      lines.push(`${pad}- ${n.kind} "${snippet(String(n.data.text ?? ''))}" (${n.id})`)
+      lines.push(`${pad}- ${n.kind} (${n.id}): ${oneLine(String(n.data.text ?? ''))}`)
     } else if (n.kind === 'list') {
-      lines.push(`${pad}- list ${Array.isArray(n.data.items) ? n.data.items.length : 0} items (${n.id})`)
+      const items = Array.isArray(n.data.items) ? n.data.items : []
+      lines.push(`${pad}- list (${n.id}):`)
+      items.forEach((it, idx) => lines.push(`${pad}    ${idx + 1}. ${oneLine(String(it))}`))
     } else {
       lines.push(`${pad}- ${n.kind} (${n.id})`)
     }
   }
   walk(root, 0)
-  return lines.slice(0, 250).join('\n')
+  return lines.slice(0, 500).join('\n')
 }
 
 /** Serialize a node to the primitive JSON shape (no ids) — used as a "mirror this" template. */

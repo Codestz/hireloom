@@ -96,7 +96,7 @@ describe('applyChatOps', () => {
   it('canvasOutline lists nodes with ids the model can reference', () => {
     const out = canvasOutline(root())
     expect(out).toMatch(/box role=skills/)
-    expect(out).toMatch(/heading "SKILLS"/)
+    expect(out).toMatch(/heading \([^)]+\): SKILLS/)
     expect(out).toContain('(') // ids present
   })
 })

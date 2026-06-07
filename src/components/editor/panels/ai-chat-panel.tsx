@@ -7,32 +7,35 @@ import {
   SparklesIcon,
   XIcon,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { useBlockDoc } from '#/components/blocks'
 import { Button } from '#/components/ui/button'
-import { chatBuildCanvas } from '#/lib/ai/service'
+import { chatTools } from '#/lib/ai/service'
+import { runTools } from '#/lib/ai/tool-engine'
+import type { ToolCall } from '#/lib/ai/tool-engine'
+import { toolDiffs, toolTargetIds } from '#/lib/ai/tool-preview'
 import { useAiReady } from '#/lib/ai/use-ai-ready'
-import { applyChatOps, canvasOutline, opDiffs, opTargetIds, sectionTemplates } from '#/lib/canvas/chat-ops'
-import type { ChatOp } from '#/lib/canvas/chat-ops'
+import { canvasOutline } from '#/lib/canvas/chat-ops'
 import { mentionTargets } from '#/lib/canvas/document-index'
 import type { MentionTarget } from '#/lib/canvas/document-index'
 import { useAiHighlight } from '#/components/blocks/canvas-tree/ai-highlight'
+import { resolveTokens } from '#/lib/templates'
+import type { ThemeTokens } from '#/lib/templates/tokens'
 import { cn } from '#/lib/utils.ts'
 
 /**
- * The CV Chat — talk to your resume. The model reads a compact outline of the canvas and
- * returns a reply plus structured ops (add a section / edit a node / remove). Ops are shown as
- * a preview you Apply or Discard — the model never mutates the document directly. Applying runs
- * through applyChatOps (which sanitizes any AI-generated subtree). Cloud Gemini recommended.
+ * The CV Chat — talk to your résumé. The model reads a compact outline of the canvas and returns
+ * a reply plus TOOL CALLS (edit/transform/add/remove). Calls are shown as a before/after preview
+ * you Apply or Discard — the model never mutates the document directly. Applying runs through the
+ * ToolEngine (zod-validated; structure/style built by the canonical builders). Cloud Gemini rec.
  */
 type Controller = ReturnType<typeof useBlockDoc>
 
 interface Message {
   role: 'user' | 'assistant'
   text: string
-  ops?: Array<ChatOp>
-  summary?: Array<string>
+  tools?: Array<ToolCall>
   applied?: boolean
   pending?: boolean
 }
@@ -55,8 +58,9 @@ const SUGGESTIONS = [
   'What’s missing from my resume?',
 ]
 
-export function AiChatPanel({ controller }: { controller: Controller }) {
+export function AiChatPanel({ controller, tokens }: { controller: Controller; tokens: ThemeTokens }) {
   const { doc } = controller
+  const resolved = useMemo(() => resolveTokens(tokens), [tokens])
   const aiReady = useAiReady()
   const [messages, setMessages] = useState<Array<Message>>(loadMessages)
   const [input, setInput] = useState('')
@@ -73,8 +77,8 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
   // Mirror the latest un-applied proposal's targets → amber "AI edit" ring on the canvas.
   useEffect(() => {
     const root = doc.canvas
-    const pending = [...messages].reverse().find((m) => m.ops && !m.applied)
-    setAffectedIds(root && pending?.ops ? opTargetIds(root, pending.ops) : [])
+    const pending = [...messages].reverse().find((m) => m.tools && !m.applied)
+    setAffectedIds(root && pending?.tools ? toolTargetIds(root, pending.tools) : [])
   }, [messages, doc.canvas, setAffectedIds])
 
   // Clear all AI highlights when leaving the chat.
@@ -164,21 +168,17 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
       const focusStr = active
         .map((t) => `${t.kind} "${t.label}" (${t.id})${t.sectionName ? ` in ${t.sectionName}` : ''}`)
         .join(', ')
-      const res = await chatBuildCanvas(
+      const res = await chatTools(
         [...history, { role: 'user', text: msg }],
         root ? canvasOutline(root) : '(empty document)',
-        root ? sectionTemplates(root) : '',
         focusStr,
       )
-      // Dry-run to preview what would change (without mutating).
-      const summary = root && res.ops.length ? applyChatOps(root, res.ops).summary : []
       setMessages((m) => {
         const next = [...m]
         next[next.length - 1] = {
           role: 'assistant',
           text: res.reply,
-          ops: summary.length ? res.ops : undefined,
-          summary: summary.length ? summary : undefined,
+          tools: res.tools.length ? res.tools : undefined,
         }
         return next
       })
@@ -193,12 +193,14 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
     }
   }
 
-  function apply(index: number, ops: Array<ChatOp>) {
+  async function apply(index: number, tools: Array<ToolCall>) {
     const root = doc.canvas
     if (!root) return
-    controller.onSetCanvasRoot(applyChatOps(root, ops).root)
+    const result = await runTools(root, resolved, tools)
+    controller.onSetCanvasRoot(result.root)
     setMessages((m) => m.map((x, i) => (i === index ? { ...x, applied: true } : x)))
-    toast.success('Applied to your resume')
+    if (result.errors.length) toast.error(`Applied with ${result.errors.length} issue(s): ${result.errors[0]}`)
+    else toast.success('Applied to your résumé')
   }
 
   if (!aiReady) {
@@ -245,7 +247,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
               Clear chat
             </button>
             {messages.map((m, i) => {
-              const diffs = m.ops && doc.canvas && !m.applied ? opDiffs(doc.canvas, m.ops) : []
+              const diffs = m.tools && doc.canvas && !m.applied ? toolDiffs(doc.canvas, resolved, m.tools) : []
               return (
               <div key={i} className={cn('flex flex-col gap-1.5', m.role === 'user' ? 'items-end' : 'items-start')}>
                 <div
@@ -256,7 +258,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
                 >
                   {m.pending ? <Loader2Icon className="size-3.5 animate-spin" /> : m.text}
                 </div>
-                {m.ops && m.summary ? (
+                {m.tools ? (
                   <div className="w-full rounded-lg border border-border bg-card p-2">
                     <p className="mb-1.5 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
                       Proposed changes
@@ -293,8 +295,8 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
                       </div>
                     ) : (
                       <ul className="mb-1.5 space-y-0.5 text-xs text-foreground/90">
-                        {m.summary.map((s, j) => (
-                          <li key={j}>• {s}</li>
+                        {m.tools.map((tcall, j) => (
+                          <li key={j}>• {tcall.tool.replace(/_/g, ' ')}</li>
                         ))}
                       </ul>
                     )}
@@ -304,7 +306,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
                       </p>
                     ) : (
                       <div className="flex gap-2">
-                        <Button size="sm" className="h-6 px-2 text-[11px]" onClick={() => apply(i, m.ops!)}>
+                        <Button size="sm" className="h-6 px-2 text-[11px]" onClick={() => void apply(i, m.tools!)}>
                           Apply
                         </Button>
                         <Button
@@ -312,9 +314,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
                           variant="ghost"
                           className="h-6 px-2 text-[11px]"
                           onClick={() =>
-                            setMessages((ms) =>
-                              ms.map((x, j) => (j === i ? { ...x, ops: undefined, summary: undefined } : x)),
-                            )
+                            setMessages((ms) => ms.map((x, j) => (j === i ? { ...x, tools: undefined } : x)))
                           }
                         >
                           Discard

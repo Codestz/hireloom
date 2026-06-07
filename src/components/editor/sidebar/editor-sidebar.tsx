@@ -72,7 +72,7 @@ const MODES: Array<SidebarMode> = [
     key: 'chat',
     label: 'CV Chat',
     icon: MessageSquareIcon,
-    render: (c) => <AiChatPanel controller={c.controller} />,
+    render: (c) => <AiChatPanel controller={c.controller} tokens={c.tokens} />,
   },
   {
     key: 'ats',
