@@ -187,7 +187,6 @@ const KNOWN_ROLES = new Set([
   'custom',
 ])
 
-/** Rebuild a BlockDoc (header + sections) from the canvas root, for export. */
 /** Find the first box with a given role, recursively (handles nested layouts). */
 function findRoleBox(node: CanvasNode, role: string): CanvasBox | null {
   if (!isBox(node)) return null
@@ -212,6 +211,7 @@ function collectRoleSections(box: CanvasBox, out: Array<DocSection>): void {
   }
 }
 
+/** Rebuild a BlockDoc (header + sections) from the canvas root, for export / ATS. */
 export function recompose(root: CanvasBox): BlockDoc {
   const header = recomposeHeader(findRoleBox(root, 'header') ?? root)
   const sections: Array<DocSection> = []
