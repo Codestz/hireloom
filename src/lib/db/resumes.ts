@@ -60,6 +60,9 @@ export async function updateResumeData(
   id: string,
   data: Resume,
 ): Promise<void> {
+  // Dexie's UpdateSpec recurses on the rich (recursive) Resume content type — a known library
+  // type-depth limitation; the call is correct at runtime.
+  // @ts-expect-error Dexie UpdateSpec<ResumeRecord> exceeds the type-instantiation depth on `data`.
   await db.resumes.update(id, { data, updatedAt: Date.now() })
 }
 

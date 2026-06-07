@@ -19,7 +19,7 @@ import {
   Trash2Icon,
   TypeIcon,
 } from 'lucide-react'
-import type { ComponentType } from 'react'
+import type { LucideIcon } from 'lucide-react'
 import type { useBlockDoc } from '#/components/blocks'
 import { SELECT_COLOR, useCanvasSelection } from '#/components/blocks/canvas-tree/selection'
 import { useDragState } from '#/components/blocks/canvas-tree/drag-context'
@@ -30,7 +30,7 @@ import { cn } from '#/lib/utils.ts'
 
 type Controller = ReturnType<typeof useBlockDoc>
 
-const ICONS: Record<string, ComponentType<{ className?: string }>> = {
+const ICONS: Record<string, LucideIcon> = {
   heading: HeadingIcon,
   text: TypeIcon,
   list: ListIcon,
@@ -48,7 +48,7 @@ function snippet(s: string, n = 24): string {
 }
 
 function describe(node: CanvasNode): {
-  Icon: ComponentType<{ className?: string }>
+  Icon: LucideIcon
   label: string
   meta?: string
 } {

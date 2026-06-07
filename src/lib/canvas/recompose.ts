@@ -20,7 +20,7 @@ const isText = (n: CanvasNode) => n.kind === 'text'
 const isList = (n: CanvasNode) => n.kind === 'list'
 const textVal = (n: CanvasNode): string =>
   typeof (n as { data?: { text?: unknown } }).data?.text === 'string'
-    ? String((n as { data: { text: string } }).data.text)
+    ? String((n as { data?: { text?: unknown } }).data?.text)
     : ''
 
 /** Text values of a box's direct children, skipping separators/other kinds. */

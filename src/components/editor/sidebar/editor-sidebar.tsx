@@ -1,13 +1,17 @@
 import {
+  ArrowLeftIcon,
   DownloadIcon,
   LayersIcon,
+  PencilIcon,
   ShieldCheckIcon,
   SparklesIcon,
   TargetIcon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { Link } from '@tanstack/react-router'
 import type { ThemeTokens } from '#/lib/templates/tokens'
+import { useRenameResume } from '#/lib/db'
 import { AiChatPanel } from '#/components/editor/panels/ai-chat-panel'
 import { AtsPanel } from '#/components/editor/panels/ats-panel'
 import { cn } from '#/lib/utils.ts'
@@ -80,7 +84,59 @@ const MODES: Array<SidebarMode> = [
   },
 ]
 
+/** Inline-editable résumé title — click to rename, saved to the record via useRenameResume. */
+function EditableTitle({ resumeId, title }: { resumeId: string; title?: string }) {
+  const rename = useRenameResume()
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(title ?? '')
+
+  useEffect(() => {
+    if (!editing) setValue(title ?? '')
+  }, [title, editing])
+
+  function save() {
+    setEditing(false)
+    const t = value.trim()
+    if (t && t !== title) rename.mutate({ id: resumeId, title: t })
+    else setValue(title ?? '')
+  }
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') save()
+          if (e.key === 'Escape') {
+            setValue(title ?? '')
+            setEditing(false)
+          }
+        }}
+        className="w-full rounded-md border border-primary/40 bg-background px-1.5 py-0.5 font-serif text-base font-medium tracking-tight outline-none"
+      />
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      title="Rename resume"
+      className="group/title flex w-full items-center gap-1.5 text-left"
+    >
+      <span className="truncate font-serif text-base font-medium tracking-tight">
+        {title || 'Untitled resume'}
+      </span>
+      <PencilIcon className="size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/title:opacity-100" />
+    </button>
+  )
+}
+
 export function EditorSidebar({
+  resumeId,
   title,
   controller,
   tokens,
@@ -89,6 +145,7 @@ export function EditorSidebar({
   onExportJson,
   onReset,
 }: {
+  resumeId: string
   title?: string
   controller: Controller
   tokens: ThemeTokens
@@ -135,12 +192,14 @@ export function EditorSidebar({
 
       <div className="atelier-panel flex min-w-0 flex-1 flex-col">
         <div className="border-b border-border px-4 py-4">
-          <p className="text-[10px] font-medium tracking-widest text-muted-foreground uppercase">
-            Editing
-          </p>
-          <h2 className="mt-1 truncate font-serif text-base font-medium tracking-tight">
-            {title || 'Your resume'}
-          </h2>
+          <Link
+            to="/resumes"
+            className="mb-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeftIcon className="size-3" />
+            All resumes
+          </Link>
+          <EditableTitle resumeId={resumeId} title={title} />
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">

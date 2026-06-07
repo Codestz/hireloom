@@ -1,6 +1,7 @@
 import {
   ArrowUpIcon,
   AtSignIcon,
+  ChevronDownIcon,
   CornerDownRightIcon,
   Loader2Icon,
   Settings2Icon,
@@ -226,11 +227,13 @@ export function AiChatPanel({ controller, tokens }: { controller: Controller; to
         <button
           type="button"
           onClick={() => setSettingsOpen(true)}
-          aria-label="AI settings"
-          className="flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="Change AI model"
+          title="Change AI model — on-device (private) or your own Gemini key"
+          className="flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
         >
           <Settings2Icon className="size-3" />
           {engineLabel()}
+          <ChevronDownIcon className="size-3 opacity-70" />
         </button>
       </div>
       <AiSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
@@ -244,6 +247,13 @@ export function AiChatPanel({ controller, tokens }: { controller: Controller; to
             <p className="text-xs text-muted-foreground">
               Ask to add or change sections — every change is previewed before it applies.
             </p>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              className="self-start text-[11px] text-primary underline-offset-2 transition-colors hover:underline"
+            >
+              Running on {engineLabel()} — switch model
+            </button>
             <div className="flex flex-col gap-1.5">
               {SUGGESTIONS.map((s) => (
                 <button

@@ -242,7 +242,7 @@ export function Selectable({
           onSelectParent={select}
           gripRef={setActivatorNodeRef}
           gripListeners={listeners}
-          gripAttributes={attributes}
+          gripAttributes={attributes as unknown as Record<string, unknown>}
         />
       ) : null}
       {children}
