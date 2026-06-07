@@ -1,8 +1,5 @@
 /** Prompt builders for the document generators (summary, cover letter, tailor, import, skills). */
 
-export const summaryPrompt = (experience: string): string =>
-  `Write a concise, compelling professional resume summary — 2 to 3 sentences, about 50 words, implied first person (no "I"/"my"). Use ONLY the experience below; do not invent anything. Respond with ONLY the summary text.\n\nExperience:\n${experience.slice(0, 3000)}`
-
 export const coverLetterPrompt = (resume: string, jd: string): string =>
   `Write a focused, professional cover letter (3 short paragraphs) for the job below, drawing only on the candidate's real resume. Be specific and confident; never fabricate experience or use clichés. Respond with ONLY the letter body — no addresses, date, or "Dear Hiring Manager" header.\n\nJob description:\n${jd.slice(0, 1500)}\n\nResume:\n${resume.slice(0, 2500)}`
 
@@ -18,9 +15,3 @@ resume TEXT:
 ${text.slice(0, 6000)}
 
 JSON:`
-
-export const suggestSkillsPrompt = (experience: string): string =>
-  `From the resume experience below, extract the concrete technical skills, tools, languages, and frameworks that are actually mentioned. Respond as a single comma-separated list — no categories, no duplicates, no commentary.\n\nExperience:\n${experience.slice(0, 3000)}`
-
-export const mergeSkillsPrompt = (existing: Array<string>, adds: Array<string>): string =>
-  `These are resume skill groups, one per line in the format "Group: item, item, item":\n${existing.join('\n')}\n\nAdd each of these skills to the single most relevant existing group: ${adds.join(', ')}.\nRules: keep the exact same groups and "Group: items" format, do NOT create new groups, do NOT duplicate, append the new skills to the end of the matching group's list. Respond with ONLY the updated groups, one per line.`

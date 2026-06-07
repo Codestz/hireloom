@@ -6,16 +6,8 @@
  */
 export { aiActionsAvailable } from './features/availability'
 export { transformText, transformTextStream } from './features/transform'
-export {
-  streamPrompt,
-  generateSummary,
-  generateCoverLetter,
-  tailorSummary,
-  structureResumeJson,
-} from './features/generators'
-export { suggestSkills, mergeSkills } from './features/skills'
-export { composeBlock } from './features/compose'
-export { chatBuildCanvas, chatTools, chatEdit } from './features/chat'
-export type { ChatResult, ToolChatResult, ChatAction } from './features/chat'
+export { generateCoverLetter, tailorSummary, structureResumeJson } from './features/generators'
+export { chatTools } from './features/chat'
+export type { ToolChatResult } from './features/chat'
 export { TEXT_ACTIONS } from './prompts/text-actions'
 export type { TextAction } from './prompts/text-actions'

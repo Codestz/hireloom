@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { makeBox, makeElement } from './model'
-import { canvasText, findSummaryNode } from './canvas-text'
+import { canvasOutline, canvasText, findSummaryNode } from './canvas-text'
 
 describe('canvas-text', () => {
   it('flattens headings, text, and list items to newline-joined text', () => {
@@ -22,5 +22,18 @@ describe('canvas-text', () => {
     const root = makeBox('column', {}, [header])
     expect(findSummaryNode(root)?.id).toBe(summary.id)
     expect(findSummaryNode(makeBox('column', {}, []))).toBeNull()
+  })
+
+  it('canvasOutline carries node ids + content (text + list items)', () => {
+    const skills = makeBox('column', {}, [
+      makeElement('heading', { text: 'SKILLS', level: 2 }),
+      makeElement('list', { items: ['TypeScript', 'Go'] }),
+    ])
+    skills.role = 'skills'
+    const out = canvasOutline(makeBox('column', {}, [skills]))
+    expect(out).toMatch(/box role=skills/)
+    expect(out).toMatch(/heading \([^)]+\): SKILLS/)
+    expect(out).toMatch(/1\. TypeScript/)
+    expect(out).toMatch(/2\. Go/)
   })
 })
