@@ -2,14 +2,9 @@ import { createFileRoute } from '@tanstack/react-router'
 import { EditorWorkspace } from '#/components/editor/editor-workspace'
 import { useLatestResume } from '#/lib/db'
 
-export const Route = createFileRoute('/editor')({
-  component: EditorPage,
-  validateSearch: (search: Record<string, unknown>): { import?: true } =>
-    search.import === true || search.import === 'true' ? { import: true } : {},
-})
+export const Route = createFileRoute('/editor')({ component: EditorPage })
 
 function EditorPage() {
-  const { import: autoImport } = Route.useSearch()
   const { data: record, isLoading } = useLatestResume()
 
   if (isLoading || !record) {
@@ -21,7 +16,5 @@ function EditorPage() {
   }
 
   // Key by id so switching resumes re-seeds the editor form.
-  return (
-    <EditorWorkspace key={record.id} record={record} autoImport={autoImport} />
-  )
+  return <EditorWorkspace key={record.id} record={record} />
 }

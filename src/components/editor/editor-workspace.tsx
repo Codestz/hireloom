@@ -1,9 +1,8 @@
 import { TopBar } from '#/components/app/top-bar'
 import { BlockCanvas } from '#/components/blocks'
 import type { ResumeRecord } from '#/lib/db'
-import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { EditorSidebar } from '#/components/editor/sidebar/editor-sidebar'
-import { ImportDialog } from '#/components/editor/dialogs/import-dialog'
 import { InspectorPanel } from '#/components/editor/inspector/inspector-panel'
 import { CanvasSelectionProvider } from '#/components/blocks/canvas-tree/selection'
 import { AiHighlightProvider } from '#/components/blocks/canvas-tree/ai-highlight'
@@ -20,12 +19,11 @@ import { useResumeEditor } from './use-resume-editor'
  */
 export interface EditorWorkspaceProps {
   record: ResumeRecord
-  autoImport?: boolean
 }
 
-export function EditorWorkspace({ record, autoImport }: EditorWorkspaceProps) {
+export function EditorWorkspace({ record }: EditorWorkspaceProps) {
   const editor = useResumeEditor(record)
-  const [importOpen, setImportOpen] = useState(Boolean(autoImport))
+  const navigate = useNavigate()
   const canvasMode = Boolean(editor.controller.doc.canvas)
 
   return (
@@ -33,12 +31,7 @@ export function EditorWorkspace({ record, autoImport }: EditorWorkspaceProps) {
       <MobileGate />
 
       <div className="hidden h-dvh flex-col overflow-hidden md:flex print:block print:h-auto print:overflow-visible">
-        <TopBar minimal onImport={() => setImportOpen(true)} />
-        <ImportDialog
-          open={importOpen}
-          onOpenChange={setImportOpen}
-          onImported={editor.replaceResume}
-        />
+        <TopBar minimal onImport={() => void navigate({ to: '/import' })} />
 
         <CanvasSelectionProvider>
          <AiHighlightProvider>
