@@ -269,13 +269,13 @@ function TypographySection({ node, controller }: Ctx) {
           <NumberField value={s.fontSize} onChange={(fontSize) => set({ fontSize })} />
         </Field>
         <Field label="Weight">
+          {/* Bundled fonts ship only normal + bold faces, so intermediate weights wouldn't render
+              in the PDF — offer just the two that stay WYSIWYG. */}
           <SelectField
-            value={String(s.fontWeight ?? 400)}
+            value={(s.fontWeight ?? 400) >= 600 ? '700' : '400'}
             onChange={(v) => set({ fontWeight: Number(v) })}
             options={[
               { value: '400', label: 'Regular' },
-              { value: '500', label: 'Medium' },
-              { value: '600', label: 'Semibold' },
               { value: '700', label: 'Bold' },
             ]}
           />
