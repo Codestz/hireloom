@@ -13,7 +13,7 @@ import type { useBlockDoc } from '#/components/blocks'
 import { Button } from '#/components/ui/button'
 import { chatBuildCanvas } from '#/lib/ai/service'
 import { useAiReady } from '#/lib/ai/use-ai-ready'
-import { applyChatOps, canvasOutline, opTargetIds, sectionTemplates } from '#/lib/canvas/chat-ops'
+import { applyChatOps, canvasOutline, opDiffs, opTargetIds, sectionTemplates } from '#/lib/canvas/chat-ops'
 import type { ChatOp } from '#/lib/canvas/chat-ops'
 import { mentionTargets } from '#/lib/canvas/document-index'
 import type { MentionTarget } from '#/lib/canvas/document-index'
@@ -235,7 +235,9 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
             >
               Clear chat
             </button>
-            {messages.map((m, i) => (
+            {messages.map((m, i) => {
+              const diffs = m.ops && doc.canvas && !m.applied ? opDiffs(doc.canvas, m.ops) : []
+              return (
               <div key={i} className={cn('flex flex-col gap-1.5', m.role === 'user' ? 'items-end' : 'items-start')}>
                 <div
                   className={cn(
@@ -247,14 +249,46 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
                 </div>
                 {m.ops && m.summary ? (
                   <div className="w-full rounded-lg border border-border bg-card p-2">
-                    <p className="mb-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+                    <p className="mb-1.5 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
                       Proposed changes
                     </p>
-                    <ul className="mb-1.5 space-y-0.5 text-xs text-foreground/90">
-                      {m.summary.map((s, j) => (
-                        <li key={j}>• {s}</li>
-                      ))}
-                    </ul>
+                    {diffs.length > 0 ? (
+                      <div className="mb-2 space-y-1.5">
+                        {diffs.map((d, j) => (
+                          <div key={j} className="overflow-hidden rounded-md border border-border">
+                            <p className="bg-muted/50 px-2 py-1 text-[10px] font-medium text-muted-foreground">
+                              {d.title}
+                            </p>
+                            <div className="divide-y divide-border/40 font-mono text-[10.5px] leading-snug">
+                              {d.lines.map((l, k) => (
+                                <div
+                                  key={k}
+                                  className={cn(
+                                    'flex gap-1.5 px-2 py-0.5 break-words whitespace-pre-wrap',
+                                    l.t === 'del'
+                                      ? 'bg-red-500/10 text-red-300'
+                                      : l.t === 'add'
+                                        ? 'bg-emerald-500/10 text-emerald-300'
+                                        : 'text-muted-foreground',
+                                  )}
+                                >
+                                  <span className="shrink-0 select-none opacity-70">
+                                    {l.t === 'del' ? '−' : l.t === 'add' ? '+' : ' '}
+                                  </span>
+                                  <span>{l.text}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <ul className="mb-1.5 space-y-0.5 text-xs text-foreground/90">
+                        {m.summary.map((s, j) => (
+                          <li key={j}>• {s}</li>
+                        ))}
+                      </ul>
+                    )}
                     {m.applied ? (
                       <p className="flex items-center gap-1 text-[11px] font-medium text-primary">
                         <CheckIcon className="size-3" /> Applied
@@ -281,7 +315,8 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
                   </div>
                 ) : null}
               </div>
-            ))}
+              )
+            })}
             <div ref={endRef} />
           </div>
         )}

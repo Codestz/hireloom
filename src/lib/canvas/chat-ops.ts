@@ -2,6 +2,8 @@ import { isBox, isHorizontal } from './model'
 import type { CanvasBox, CanvasNode } from './model'
 import { addChild, findNode, findParent, removeNode, updateElementData } from './tree-ops'
 import { sanitizeAiNode } from './ai-compose'
+import { diffLines } from '#/lib/diff'
+import type { DiffLine } from '#/lib/diff'
 
 /**
  * Applies the structured ops the CV chat (A3) returns, onto the canvas tree. Pure — returns a
@@ -155,6 +157,60 @@ export function opTargetIds(root: CanvasBox, ops: ReadonlyArray<ChatOp>): Array<
     }
   }
   return [...ids]
+}
+
+export interface OpDiff {
+  title: string
+  lines: Array<DiffLine>
+}
+
+/** All text leaves of a node (headings/text + list items), in order. */
+function textLeaves(node: CanvasNode): Array<string> {
+  const out: Array<string> = []
+  const walk = (n: CanvasNode) => {
+    if (isBox(n)) {
+      for (const c of n.children) walk(c)
+    } else if (n.kind === 'heading' || n.kind === 'text') {
+      const t = String(n.data.text ?? '').trim()
+      if (t) out.push(t)
+    } else if (n.kind === 'list') {
+      for (const i of Array.isArray(n.data.items) ? n.data.items : []) {
+        const t = String(i).trim()
+        if (t) out.push(t)
+      }
+    }
+  }
+  walk(node)
+  return out
+}
+
+/** Current vs proposed, per op — for the chat's before/after preview. */
+export function opDiffs(root: CanvasBox, ops: ReadonlyArray<ChatOp>): Array<OpDiff> {
+  const out: Array<OpDiff> = []
+  for (const op of ops) {
+    if (op.op === 'edit_text' && op.id) {
+      const n = findNode(root, op.id)
+      if (!n || isBox(n)) continue
+      out.push({
+        title: 'Edit text',
+        lines: diffLines(String(n.data.text ?? '').split('\n'), String(op.text ?? '').split('\n')),
+      })
+    } else if (op.op === 'edit_list' && op.id && Array.isArray(op.items)) {
+      const n = findNode(root, op.id)
+      if (!n || isBox(n) || n.kind !== 'list') continue
+      const old = Array.isArray(n.data.items) ? n.data.items.map((x) => String(x)) : []
+      out.push({ title: 'Rewrite list', lines: diffLines(old, op.items.map((x) => String(x))) })
+    } else if (op.op === 'add') {
+      const n = sanitizeAiNode(op.node)
+      if (!n) continue
+      out.push({ title: `Add ${nodeLabel(n)}`, lines: textLeaves(n).map((text) => ({ t: 'add', text })) })
+    } else if (op.op === 'remove' && op.id) {
+      const n = findNode(root, op.id)
+      if (!n) continue
+      out.push({ title: `Remove ${nodeLabel(n)}`, lines: textLeaves(n).map((text) => ({ t: 'del', text })) })
+    }
+  }
+  return out
 }
 
 export function applyChatOps(
