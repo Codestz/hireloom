@@ -8,11 +8,14 @@ import { tailorSummary } from '#/lib/ai/service'
 import { useAiReady } from '#/lib/ai/use-ai-ready'
 import { matchResume } from '#/lib/ats/match'
 import { resumeText } from '#/lib/blocks/doc-text'
+import { canvasText, findSummaryNode } from '#/lib/canvas/canvas-text'
+import { documentIndex } from '#/lib/canvas/document-index'
+import { findNode } from '#/lib/canvas/tree-ops'
 
 /**
- * ATS panel — paste a job description, get a deterministic on-device keyword match
- * (score + matched/missing), AI suggestions for the gaps, and one-click "Tailor my
- * summary to this job" with a projected score lift. Nothing leaves the device.
+ * ATS panel — paste a job description, get a deterministic keyword match against YOUR CANVAS
+ * (the source of truth): score + matched/missing + which sections cover the keywords, plus AI
+ * gap suggestions and one-click "Tailor my summary to this job" (applied to the canvas summary).
  */
 type Controller = ReturnType<typeof useBlockDoc>
 
@@ -47,11 +50,26 @@ export function AtsPanel({ controller }: { controller: Controller }) {
   const [tailoring, setTailoring] = useState(false)
   const [afterScore, setAfterScore] = useState<number | null>(null)
 
-  const text = useMemo(() => resumeText(doc), [doc])
+  const text = useMemo(() => (doc.canvas ? canvasText(doc.canvas) : resumeText(doc)), [doc])
   const result = useMemo(
     () => (jd.trim().length > 20 ? matchResume(jd, text) : null),
     [jd, text],
   )
+
+  // Where the JD keywords land across the canvas sections (the source of truth).
+  const coverage = useMemo(() => {
+    const root = doc.canvas
+    if (!root || !result) return []
+    const terms = [...result.matched, ...result.missing].map((k) => k.term)
+    return documentIndex(root)
+      .map((s) => {
+        const node = findNode(root, s.id)
+        const lower = node ? canvasText(node).toLowerCase() : ''
+        return { name: s.name, hits: terms.filter((tm) => lower.includes(tm)).length }
+      })
+      .filter((s) => s.hits > 0)
+      .sort((a, b) => b.hits - a.hits)
+  }, [doc.canvas, result])
   const scoreColor =
     !result || result.score >= 60
       ? '#2f6b4f'
@@ -89,9 +107,9 @@ For each missing keyword, give ONE short line: either note I likely already cove
     setAfterScore(null)
     try {
       const next = await tailorSummary(text, jd, setTailored)
-      const after = doc.header.summary
-        ? text.replace(doc.header.summary, next)
-        : `${text}\n${next}`
+      const summaryNode = doc.canvas ? findSummaryNode(doc.canvas) : null
+      const oldSummary = summaryNode ? String(summaryNode.data.text ?? '') : doc.header.summary
+      const after = oldSummary ? text.replace(oldSummary, next) : `${text}\n${next}`
       setAfterScore(matchResume(jd, after).score)
     } catch {
       toast.error('The AI request failed — check AI settings.')
@@ -101,8 +119,14 @@ For each missing keyword, give ONE short line: either note I likely already cove
   }
 
   function applyTailored() {
-    controller.onHeaderChange('summary', tailored.trim())
-    controller.bump()
+    const root = doc.canvas
+    const node = root ? findSummaryNode(root) : null
+    if (node) {
+      controller.onCanvasUpdateData(node.id, { text: tailored.trim() })
+    } else {
+      controller.onHeaderChange('summary', tailored.trim())
+      controller.bump()
+    }
     setTailored('')
     setAfterScore(null)
     toast.success('Summary tailored to the job')
@@ -155,6 +179,22 @@ For each missing keyword, give ONE short line: either note I likely already cove
                 Matched ({result.matched.length})
               </span>
               <Chips terms={result.matched.map((k) => k.term)} tone="ok" />
+            </div>
+          ) : null}
+
+          {coverage.length ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                Coverage by section
+              </span>
+              {coverage.map((s) => (
+                <div key={s.name} className="flex items-center justify-between text-[11px]">
+                  <span className="text-foreground/90">{s.name}</span>
+                  <span className="text-muted-foreground">
+                    {s.hits} keyword{s.hits === 1 ? '' : 's'}
+                  </span>
+                </div>
+              ))}
             </div>
           ) : null}
 
