@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useBlockDoc } from '#/components/blocks'
-import { downloadCanvasPdf, downloadResumePdf } from '#/lib/export/pdf'
+import { downloadResumePdf } from '#/lib/export/pdf'
+import { downloadCanvasPdf } from '#/lib/export/pdf-canvas'
 import { SECTIONS } from '#/lib/blocks/sections'
 import {
   updateResumeData,
