@@ -163,15 +163,13 @@ export function Selectable({
       ? `1px ${lineStyle} ${color}80`
       : undefined
 
-  // AI canvas highlights (chat-driven): affected (amber, pending edit) wins over focused (green).
+  // AI canvas highlights (chat-driven), distinct in KIND from the editor's solid/dashed borders:
+  // focus = thin dotted green + faint wash; change = amber left "git-gutter" bar + faint wash.
+  // Amber (a pending edit) wins over green (focused).
   const { focusedIds, affectedIds } = useAiHighlight()
   const affected = affectedIds.has(node.id)
-  const focused = focusedIds.has(node.id)
-  const boxShadow = affected
-    ? `0 0 0 2px ${AI_AFFECT_COLOR}, 0 0 0 7px ${AI_AFFECT_COLOR}26`
-    : focused
-      ? `0 0 0 2px ${AI_FOCUS_COLOR}, 0 0 0 7px ${AI_FOCUS_COLOR}22`
-      : undefined
+  const focused = focusedIds.has(node.id) && !affected
+  const aiColor = affected ? AI_AFFECT_COLOR : AI_FOCUS_COLOR
 
   return (
     <div
@@ -192,10 +190,24 @@ export function Selectable({
         outline,
         outlineOffset: box ? 2 : 1,
         borderRadius: 2,
-        boxShadow,
         opacity: dragging ? 0.4 : undefined,
       }}
     >
+      {focused || affected ? (
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: 3,
+            pointerEvents: 'none',
+            background: `${aiColor}0d`,
+            ...(affected
+              ? { borderLeft: `3px solid ${aiColor}` }
+              : { border: `1px dotted ${aiColor}` }),
+          }}
+        />
+      ) : null}
       {focused || affected ? (
         <span
           style={{
@@ -207,17 +219,18 @@ export function Selectable({
             display: 'inline-flex',
             alignItems: 'center',
             gap: 3,
-            background: affected ? AI_AFFECT_COLOR : AI_FOCUS_COLOR,
-            color: '#fff',
+            background: `${aiColor}1f`,
+            color: aiColor,
             fontSize: 9,
+            fontWeight: 600,
             lineHeight: 1.5,
-            padding: '1px 5px',
+            padding: '0 5px',
             borderRadius: 4,
             whiteSpace: 'nowrap',
             pointerEvents: 'none',
           }}
         >
-          {affected ? '✦ AI edit' : '◎ focus'}
+          {affected ? 'AI edit' : 'focus'}
         </span>
       ) : null}
       {selected || hovered ? (
