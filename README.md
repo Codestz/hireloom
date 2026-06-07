@@ -44,7 +44,7 @@ So I built HireLoom: the resume tool I actually wanted. The kind that runs entir
 
 ## Run it locally
 
-Requires **Node 20+** and **pnpm**.
+Requires **Node 22+** (pnpm 11 needs Node ≥22.13) and **pnpm**.
 
 ```bash
 pnpm install
@@ -67,7 +67,7 @@ The AI features use **Chrome's built-in Prompt API** (Gemini Nano). To enable it
 3. Relaunch Chrome.
 4. `chrome://components` → **Optimization Guide On Device Model** → *Check for update* (downloads ~2–4 GB once).
 
-No on-device AI (other browsers, or don't want the download)? Add your own **Gemini key** in the app at *AI Studio → Engine* — stored only in your browser. Everything non-AI (editing, ATS match, PDF/JSON export, JSON/LinkedIn import) works with **no AI at all**.
+No on-device AI (other browsers, or don't want the download)? Open the **Assistant** tab and click the engine name (⚙) in its header to switch to **Gemini (your key)** — stored only in your browser. Everything non-AI (editing, ATS match, PDF/JSON export, JSON/LinkedIn import) works with **no AI at all**.
 
 ## Built with
 
