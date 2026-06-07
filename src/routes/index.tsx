@@ -41,6 +41,9 @@ function Home() {
         </span>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+            <Link to="/resumes">Resumes</Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
             <a href="#templates">Templates</a>
           </Button>
           <Button variant="ghost" size="icon" asChild>

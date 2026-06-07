@@ -40,6 +40,7 @@ export function EditorWorkspace({ record }: EditorWorkspaceProps) {
           <div className="flex flex-1 overflow-hidden print:block print:overflow-visible">
             <ResizableSidebar>
               <EditorSidebar
+                resumeId={record.id}
                 title={record.title}
                 controller={editor.controller}
                 tokens={editor.tokens}
