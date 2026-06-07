@@ -49,7 +49,7 @@ function HowItWorks() {
 /** A faithful static reproduction of the Assistant chat + diff (the real design, no live data). */
 function AssistantCard() {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
+    <div className="flex h-full flex-col gap-2 rounded-xl border border-border bg-card p-3">
       <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
         <MessageSquareIcon className="size-3.5 text-primary" /> Assistant
       </div>
@@ -85,7 +85,7 @@ function AtsCard() {
   const matched = ['typescript', 'react', 'node.js', 'ci/cd', 'microservices']
   const missing = ['kubernetes', 'rust']
   return (
-    <div className="flex flex-col gap-2.5 rounded-lg border border-border bg-card p-3">
+    <div className="flex h-full flex-col gap-2.5 rounded-xl border border-border bg-card p-3">
       <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
         <TargetIcon className="size-3.5 text-primary" /> Job Match
       </div>
@@ -140,19 +140,19 @@ export function Showcase() {
     <>
       <HowItWorks />
       <section className="mx-auto w-full max-w-5xl px-6 pb-16">
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid items-stretch gap-8 lg:grid-cols-3">
           {SHOWCASE.map((s) => (
             <div key={s.title} className="flex flex-col gap-3">
-              <div className="min-h-[12rem] overflow-hidden rounded-xl border border-border bg-muted/30 p-3">
+              <div className="h-72">
                 {s.render === 'builder' ? (
-                  <div className="relative h-48 overflow-hidden rounded-md border border-border bg-white">
+                  <div className="relative h-full overflow-hidden rounded-xl border border-border bg-white">
                     <div
                       style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
                         width: 612,
-                        transform: `scale(${288 / 612})`,
+                        transform: 'scale(0.48)',
                         transformOrigin: 'top left',
                         pointerEvents: 'none',
                       }}
