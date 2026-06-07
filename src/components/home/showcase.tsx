@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { CheckIcon, FileTextIcon, MessageSquareIcon, SparklesIcon, TargetIcon } from 'lucide-react'
-import { CanvasPreview } from '#/components/blocks/canvas-tree/canvas-preview'
+import { ScaledCanvasPreview } from '#/components/blocks/canvas-tree/scaled-canvas-preview'
 import { decompose } from '#/lib/canvas/decompose'
 import { resumeToDoc } from '#/lib/blocks/json-resume'
 import { resolveTokens } from '#/lib/templates'
@@ -146,19 +146,7 @@ export function Showcase() {
               <div className="h-72">
                 {s.render === 'builder' ? (
                   <div className="relative h-full overflow-hidden rounded-xl border border-border bg-white">
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: 612,
-                        transform: 'scale(0.48)',
-                        transformOrigin: 'top left',
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      <CanvasPreview root={builderRoot.root} tokens={builderRoot.tokens} />
-                    </div>
+                    <ScaledCanvasPreview root={builderRoot.root} tokens={builderRoot.tokens} width={294} />
                   </div>
                 ) : (
                   s.render()

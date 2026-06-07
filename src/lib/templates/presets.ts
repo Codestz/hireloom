@@ -1,13 +1,12 @@
 import { DEFAULT_TOKENS } from './tokens'
-import type { FontOption, ThemeTokens } from './tokens'
+import type { FontOption, LayoutKind, ThemeTokens } from './tokens'
 
 /**
- * Templates = document LAYOUT (the real templating). Styling — font, accent, density —
- * stays separate (Design panel) and applies on top of any layout. Based on the three
- * archetypes that dominate 2026 CV design: single column (ATS-safe), two-column with a
- * side rail (human-first), and a full-width header band.
+ * Templates = document LAYOUT (the real templating). Styling — font, accent, density — applies on
+ * top of any layout. Based on the three archetypes that dominate 2026 CV design: single column
+ * (ATS-safe), two-column with a side rail (human-first), and a full-width header band.
+ * `LayoutKind` lives in ./tokens (single source, mirrors the schema) — imported here, not redefined.
  */
-export type LayoutKind = 'single' | 'sidebar' | 'band'
 export type Column = 'side' | 'main'
 
 export interface Template {

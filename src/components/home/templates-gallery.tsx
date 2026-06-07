@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '#/components/ui/dialog'
-import { CanvasPreview } from '#/components/blocks/canvas-tree/canvas-preview'
+import { ScaledCanvasPreview } from '#/components/blocks/canvas-tree/scaled-canvas-preview'
 import { decompose } from '#/lib/canvas/decompose'
 import { resumeToDoc } from '#/lib/blocks/json-resume'
 import { resolveTokens } from '#/lib/templates'
@@ -19,7 +19,7 @@ import { TEMPLATES, templateTokens } from '#/lib/templates/presets'
 import { TEMPLATE_SAMPLE } from '#/lib/sample/template-sample'
 import { createResumeFromTemplate, resumeKeys } from '#/lib/db'
 
-const SCALE = 224 / 612 // card width (w-56) / preview page width
+const CARD_WIDTH = 224 // w-56
 
 /**
  * Template gallery — each card is a LIVE render of the neutral sample decomposed with the
@@ -66,19 +66,7 @@ export function TemplatesGallery() {
             className="group flex w-56 flex-col overflow-hidden rounded-xl border border-border bg-card text-left shadow-sm transition-all hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl"
           >
             <div className="relative aspect-[8.5/11] overflow-hidden border-b border-border bg-white">
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: 612,
-                  transform: `scale(${SCALE})`,
-                  transformOrigin: 'top left',
-                  pointerEvents: 'none',
-                }}
-              >
-                <CanvasPreview root={root} tokens={tokens} />
-              </div>
+              <ScaledCanvasPreview root={root} tokens={tokens} width={CARD_WIDTH} />
               <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-foreground/25 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
                 <span className="mb-3 inline-flex items-center gap-1 rounded-full bg-background px-3 py-1 text-xs font-medium shadow-md">
                   Use template

@@ -13,7 +13,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '#/components/app/theme-toggle'
 import { Button } from '#/components/ui/button'
-import { CanvasPreview } from '#/components/blocks/canvas-tree/canvas-preview'
+import { ScaledCanvasPreview } from '#/components/blocks/canvas-tree/scaled-canvas-preview'
 import { aiActionsAvailable } from '#/lib/ai/service'
 import { engineLabel } from '#/lib/ai/engine'
 import { decompose } from '#/lib/canvas/decompose'
@@ -269,19 +269,7 @@ function PreviewStep({
         {/* Big live preview of the selected layout */}
         <div className="flex justify-center">
           <div className="relative aspect-[8.5/11] w-full max-w-[520px] overflow-hidden rounded-xl border border-border bg-white shadow-sm">
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: 612,
-                transform: 'scale(0.85)',
-                transformOrigin: 'top left',
-                pointerEvents: 'none',
-              }}
-            >
-              <CanvasPreview root={selected.root} tokens={selected.tokens} />
-            </div>
+            <ScaledCanvasPreview root={selected.root} tokens={selected.tokens} width={520} />
           </div>
         </div>
 
