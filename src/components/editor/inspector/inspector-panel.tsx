@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Settings2Icon, SquarePlusIcon } from 'lucide-react'
 import type { useBlockDoc } from '#/components/blocks'
 import { useCanvasSelection } from '#/components/blocks/canvas-tree/selection'
@@ -36,6 +37,8 @@ export function InspectorPanel({ controller }: { controller: Controller }) {
     { id: 'settings', label: 'Settings', icon: Settings2Icon },
   ]
 
+  const showHints = Boolean(selectedId) && selectedId !== controller.doc.canvas?.id
+
   return (
     <div className="flex h-full flex-col text-sm">
       <div className="flex border-b border-border">
@@ -64,6 +67,32 @@ export function InspectorPanel({ controller }: { controller: Controller }) {
           <SettingsPanel controller={controller} />
         )}
       </div>
+
+      {showHints ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Key>Alt</Key>
+            <Key>↑↓</Key>
+            reorder
+          </span>
+          <span className="flex items-center gap-1">
+            <Key>Del</Key>
+            remove
+          </span>
+          <span className="flex items-center gap-1">
+            <Key>Esc</Key>
+            deselect
+          </span>
+        </div>
+      ) : null}
     </div>
+  )
+}
+
+function Key({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="rounded border border-border bg-muted px-1 py-px font-mono text-[10px] text-foreground">
+      {children}
+    </kbd>
   )
 }
