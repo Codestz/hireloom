@@ -84,6 +84,54 @@ export function documentIndex(root: CanvasBox): Array<SectionRef> {
   })
 }
 
+/** A thing the chat can @-mention: a whole section, or one entry inside a section. */
+export interface MentionTarget {
+  id: string
+  label: string
+  kind: 'section' | 'entry'
+  role?: string
+  /** For entries: the parent section's name (shown as context in the picker). */
+  sectionName?: string
+}
+
+/** First couple of text/heading leaves of a box → a short label, e.g. "Senior Engineer · Recurly". */
+function entryLabel(box: CanvasBox): string {
+  const texts: Array<string> = []
+  const walk = (n: CanvasNode) => {
+    if (texts.length >= 2) return
+    if (isBox(n)) {
+      for (const c of n.children) walk(c)
+    } else if (n.kind === 'heading' || n.kind === 'text') {
+      const t = String(n.data.text ?? '').trim()
+      if (t) texts.push(t)
+    }
+  }
+  walk(box)
+  const label = texts.join(' · ')
+  return (label.length > 52 ? `${label.slice(0, 52)}…` : label) || 'Entry'
+}
+
+/** A section's entries = its child boxes that are NOT the heading/header sub-box. */
+function sectionEntries(section: CanvasBox): Array<CanvasBox> {
+  return section.children.filter(
+    (c): c is CanvasBox => isBox(c) && !c.children.some((x) => !isBox(x) && x.kind === 'heading'),
+  )
+}
+
+/** Everything the chat can @-mention: each section, followed by its entries. */
+export function mentionTargets(root: CanvasBox): Array<MentionTarget> {
+  const out: Array<MentionTarget> = []
+  for (const box of root.children) {
+    if (!isSection(box)) continue
+    const name = sectionLabel(box)
+    out.push({ id: box.id, label: name, kind: 'section', role: box.role })
+    for (const entry of sectionEntries(box)) {
+      out.push({ id: entry.id, label: entryLabel(entry), kind: 'entry', sectionName: name })
+    }
+  }
+  return out
+}
+
 /**
  * Assign every section a UNIQUE `name` in place — keep existing names, derive defaults for the
  * rest, and de-duplicate with " 2", " 3"… suffixes. Call after decompose and after the AI adds a

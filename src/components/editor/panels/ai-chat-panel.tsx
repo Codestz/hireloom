@@ -1,4 +1,12 @@
-import { ArrowUpIcon, AtSignIcon, CheckIcon, Loader2Icon, SparklesIcon, XIcon } from 'lucide-react'
+import {
+  ArrowUpIcon,
+  AtSignIcon,
+  CheckIcon,
+  CornerDownRightIcon,
+  Loader2Icon,
+  SparklesIcon,
+  XIcon,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { useBlockDoc } from '#/components/blocks'
@@ -7,8 +15,8 @@ import { chatBuildCanvas } from '#/lib/ai/service'
 import { useAiReady } from '#/lib/ai/use-ai-ready'
 import { applyChatOps, canvasOutline, opTargetIds, sectionTemplates } from '#/lib/canvas/chat-ops'
 import type { ChatOp } from '#/lib/canvas/chat-ops'
-import { documentIndex } from '#/lib/canvas/document-index'
-import type { SectionRef } from '#/lib/canvas/document-index'
+import { mentionTargets } from '#/lib/canvas/document-index'
+import type { MentionTarget } from '#/lib/canvas/document-index'
 import { useAiHighlight } from '#/components/blocks/canvas-tree/ai-highlight'
 import { cn } from '#/lib/utils.ts'
 
@@ -58,8 +66,8 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
   // @-mention autocomplete: mq = the active "@query" (null when not typing one).
   const [mq, setMq] = useState<string | null>(null)
   const [mhi, setMhi] = useState(0)
-  // Sticky focus: sections the conversation is scoped to (carry across messages until cleared).
-  const [focus, setFocus] = useState<Array<SectionRef>>([])
+  // Sticky focus: sections/entries the conversation is scoped to (carry across messages).
+  const [focus, setFocus] = useState<Array<MentionTarget>>([])
   const { setFocusedIds, setAffectedIds } = useAiHighlight()
 
   // Mirror @-focus → green ring on the canvas.
@@ -80,11 +88,11 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
     setAffectedIds([])
   }, [setFocusedIds, setAffectedIds])
 
-  const sections = doc.canvas ? documentIndex(doc.canvas) : []
+  const targets = doc.canvas ? mentionTargets(doc.canvas) : []
   const candidates =
     mq === null
       ? []
-      : sections.filter((s) => s.name.toLowerCase().includes(mq.toLowerCase())).slice(0, 6)
+      : targets.filter((t) => t.label.toLowerCase().includes(mq.toLowerCase())).slice(0, 8)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' })
@@ -95,22 +103,22 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
     }
   }, [messages])
 
-  /** Sections @-mentioned in a message (longest-name-first so prefixes don't double-match). */
-  function referencedSections(msg: string): Array<SectionRef> {
+  /** Targets @-mentioned in a message (longest-label-first so prefixes don't double-match). */
+  function referencedTargets(msg: string): Array<MentionTarget> {
     let text = msg
-    const out: Array<SectionRef> = []
-    for (const s of [...sections].sort((a, b) => b.name.length - a.name.length)) {
-      const tok = `@${s.name}`
+    const out: Array<MentionTarget> = []
+    for (const t of [...targets].sort((a, b) => b.label.length - a.label.length)) {
+      const tok = `@${t.label}`
       if (text.includes(tok)) {
-        out.push(s)
+        out.push(t)
         text = text.split(tok).join(' ')
       }
     }
     return out
   }
 
-  /** Replace the active "@query" with the chosen section's "@Name ". */
-  function pickMention(s: SectionRef | undefined) {
+  /** Replace the active "@query" with the chosen target's "@Label ". */
+  function pickMention(s: MentionTarget | undefined) {
     const ta = taRef.current
     if (!s || !ta) return
     const caret = ta.selectionStart
@@ -118,7 +126,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
     if (!m) return
     const start = caret - (m[1].length + 1)
     const before = input.slice(0, start)
-    const insert = `@${s.name} `
+    const insert = `@${s.label} `
     setInput(before + insert + input.slice(caret))
     setMq(null)
     requestAnimationFrame(() => {
@@ -140,11 +148,13 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
       .map((m) => ({ role: m.role, text: m.text }))
     setMessages((m) => [...m, { role: 'user', text: msg }, { role: 'assistant', text: '', pending: true }])
     try {
-      // Sticky focus: a fresh @-mention re-scopes; otherwise keep the pinned sections.
-      const mentioned = referencedSections(msg)
+      // Sticky focus: a fresh @-mention re-scopes; otherwise keep the pinned targets.
+      const mentioned = referencedTargets(msg)
       const active = mentioned.length ? mentioned : focus
       if (mentioned.length) setFocus(mentioned)
-      const focusStr = active.map((s) => `"${s.name}" (${s.id})`).join(', ')
+      const focusStr = active
+        .map((t) => `${t.kind} "${t.label}" (${t.id})${t.sectionName ? ` in ${t.sectionName}` : ''}`)
+        .join(', ')
       const res = await chatBuildCanvas(
         [...history, { role: 'user', text: msg }],
         root ? canvasOutline(root) : '(empty document)',
@@ -287,7 +297,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
         {mq !== null && candidates.length > 0 ? (
           <div className="absolute right-2 bottom-full left-2 mb-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
             <p className="px-2.5 pt-2 pb-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
-              Mention a section
+              Mention a section or entry
             </p>
             {candidates.map((s, i) => (
               <button
@@ -298,19 +308,22 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
                   pickMention(s)
                 }}
                 className={cn(
-                  'flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left text-xs',
+                  'flex w-full items-center justify-between gap-2 py-2 pr-2.5 text-left text-xs',
+                  s.kind === 'entry' ? 'pl-6' : 'pl-2.5',
                   i === mhi ? 'bg-primary/10 text-foreground' : 'hover:bg-muted/60',
                 )}
               >
-                <span className="flex items-center gap-1.5 font-medium">
-                  <AtSignIcon className="size-3 text-primary" />
-                  {s.name}
+                <span className="flex min-w-0 items-center gap-1.5 font-medium">
+                  {s.kind === 'section' ? (
+                    <AtSignIcon className="size-3 shrink-0 text-primary" />
+                  ) : (
+                    <CornerDownRightIcon className="size-3 shrink-0 text-muted-foreground" />
+                  )}
+                  <span className="truncate">{s.label}</span>
                 </span>
-                {s.role ? (
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    {s.role}
-                  </span>
-                ) : null}
+                <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  {s.kind === 'entry' ? s.sectionName : (s.role ?? 'section')}
+                </span>
               </button>
             ))}
           </div>
@@ -324,10 +337,10 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
                 key={s.id}
                 className="flex items-center gap-1 rounded-full bg-primary/10 py-0.5 pr-1 pl-2 text-[11px] font-medium text-primary"
               >
-                @{s.name}
+                @{s.label}
                 <button
                   type="button"
-                  aria-label={`Stop focusing ${s.name}`}
+                  aria-label={`Stop focusing ${s.label}`}
                   onClick={() => setFocus((f) => f.filter((x) => x.id !== s.id))}
                   className="flex size-3.5 items-center justify-center rounded-full hover:bg-primary/20"
                 >
