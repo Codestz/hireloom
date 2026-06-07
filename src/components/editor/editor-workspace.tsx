@@ -43,10 +43,7 @@ export function EditorWorkspace({ record }: EditorWorkspaceProps) {
                 title={record.title}
                 controller={editor.controller}
                 tokens={editor.tokens}
-                activeTemplate={editor.templateId}
                 availableSections={editor.availableSections}
-                onTokensChange={editor.changeTokens}
-                onApplyTemplate={editor.applyTemplate}
                 onExportPdf={editor.exportPdf}
                 onExportJson={editor.exportJson}
                 onReset={editor.resetResume}

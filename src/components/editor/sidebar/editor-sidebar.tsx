@@ -21,17 +21,14 @@ import type { useBlockDoc } from '#/components/blocks'
 import { TreePanel } from './structure-tree'
 import { NavigatorTree } from './navigator-tree'
 
-type Mode = 'build' | 'ai' | 'chat' | 'ats' | 'export'
+type Mode = 'build' | 'chat' | 'ats' | 'export'
 type Controller = ReturnType<typeof useBlockDoc>
 
 /** Everything a sidebar panel might need — passed to each mode's `render`. */
 interface SidebarContext {
   controller: Controller
   tokens: ThemeTokens
-  activeTemplate?: string
   availableSections: Array<{ type: string; label: string }>
-  onTokensChange: (next: ThemeTokens) => void
-  onApplyTemplate: (id: string) => void
   onExportPdf: () => void
   onExportJson: () => void
   onReset: () => void
@@ -192,10 +189,7 @@ export function EditorSidebar({
   title,
   controller,
   tokens,
-  activeTemplate,
   availableSections,
-  onTokensChange,
-  onApplyTemplate,
   onExportPdf,
   onExportJson,
   onReset,
@@ -203,10 +197,7 @@ export function EditorSidebar({
   title?: string
   controller: Controller
   tokens: ThemeTokens
-  activeTemplate?: string
   availableSections: Array<{ type: string; label: string }>
-  onTokensChange: (next: ThemeTokens) => void
-  onApplyTemplate: (id: string) => void
   onExportPdf: () => void
   onExportJson: () => void
   onReset: () => void
@@ -215,10 +206,7 @@ export function EditorSidebar({
   const ctx: SidebarContext = {
     controller,
     tokens,
-    activeTemplate,
     availableSections,
-    onTokensChange,
-    onApplyTemplate,
     onExportPdf,
     onExportJson,
     onReset,

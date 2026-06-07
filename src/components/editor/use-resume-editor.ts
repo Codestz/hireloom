@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useBlockDoc } from '#/components/blocks'
 import { downloadCanvasPdf, downloadResumePdf } from '#/lib/export/pdf'
@@ -8,8 +8,6 @@ import {
   updateResumeTemplate,
   updateResumeTokens,
   useUpdateResumeData,
-  useUpdateResumeTemplate,
-  useUpdateResumeTokens,
 } from '#/lib/db'
 import type { ResumeRecord } from '#/lib/db'
 import { docToResume, resumeToDoc } from '#/lib/blocks/json-resume'
@@ -20,7 +18,6 @@ import { createEmptyResume, downloadResumeJson } from '#/lib/resume'
 import { slugify } from '#/lib/utils.ts'
 import { getTemplate, resolveTokens } from '#/lib/templates'
 import { DEFAULT_TEMPLATE_ID, DEFAULT_TOKENS } from '#/lib/templates/tokens'
-import type { ThemeTokens } from '#/lib/templates/tokens'
 
 const AUTOSAVE_MS = 600
 
@@ -44,14 +41,13 @@ export function useResumeEditor(record: ResumeRecord) {
   const controller = useBlockDoc(initialDoc)
   const { doc } = controller
 
-  const [tokens, setTokens] = useState<ThemeTokens>(record.tokens)
-  const [templateId, setTemplateId] = useState(record.templateId)
+  // Theme/template are fixed per resume (set at create/import). The in-editor design panel was
+  // retired in the 2→panel consolidation, so nothing mutates these during a session.
+  const { tokens, templateId } = record
   const resolved = useMemo(() => resolveTokens(tokens), [tokens])
   const layout = getTemplate(templateId)?.layout ?? 'single'
 
   const saveData = useUpdateResumeData(record.id)
-  const saveTokens = useUpdateResumeTokens(record.id)
-  const saveTemplate = useUpdateResumeTemplate(record.id)
 
   // Autosave: BlockDoc → JSON Resume → Dexie (debounced; preserves unknown fields).
   useEffect(() => {
@@ -70,25 +66,6 @@ export function useResumeEditor(record: ResumeRecord) {
       label: st.heading,
     }))
   }, [doc.sections])
-
-  function changeTokens(next: ThemeTokens) {
-    setTokens(next)
-    saveTokens.mutate(next)
-  }
-
-  function applyTemplate(id: string) {
-    const tpl = getTemplate(id)
-    if (!tpl) return
-    setTemplateId(id)
-    changeTokens({
-      ...tokens,
-      fontHeading: tpl.font,
-      fontBody: tpl.font,
-      density: tpl.density,
-    })
-    controller.onApplyVariants(tpl.variants)
-    saveTemplate.mutate(id)
-  }
 
   // Wipe content + design back to a blank slate, then reload the editor fresh.
   function resetResume() {
@@ -131,8 +108,6 @@ export function useResumeEditor(record: ResumeRecord) {
     resolved,
     layout,
     availableSections,
-    changeTokens,
-    applyTemplate,
     resetResume,
     exportJson,
     exportPdf,
