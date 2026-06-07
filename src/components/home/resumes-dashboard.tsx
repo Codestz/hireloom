@@ -1,6 +1,17 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { CopyIcon, MoreVerticalIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import {
+  ChevronDownIcon,
+  CopyIcon,
+  FileTextIcon,
+  LayoutTemplateIcon,
+  MoreVerticalIcon,
+  PencilIcon,
+  PlusIcon,
+  Trash2Icon,
+  UploadIcon,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '#/components/app/theme-toggle'
 import { Button } from '#/components/ui/button'
@@ -25,6 +36,8 @@ import { decompose } from '#/lib/canvas/decompose'
 import { resumeToDoc } from '#/lib/blocks/json-resume'
 import { resolveTokens } from '#/lib/templates'
 import {
+  createResume,
+  resumeKeys,
   useDeleteResume,
   useDuplicateResume,
   useRenameResume,
@@ -47,8 +60,16 @@ function timeAgo(ts: number): string {
 /** The "Your resumes" dashboard: every saved resume as a live thumbnail with open/rename/duplicate/delete. */
 export function ResumesDashboard() {
   const { data: resumes, isLoading } = useResumes()
+  const navigate = useNavigate()
+  const qc = useQueryClient()
   const [renaming, setRenaming] = useState<ResumeRecord | null>(null)
   const [deleting, setDeleting] = useState<ResumeRecord | null>(null)
+
+  async function createBlank() {
+    const record = await createResume({ title: 'Untitled resume' })
+    await qc.invalidateQueries({ queryKey: resumeKeys.all })
+    void navigate({ to: '/editor', search: { id: record.id } })
+  }
 
   return (
     <div className="min-h-dvh bg-background">
@@ -62,12 +83,29 @@ export function ResumesDashboard() {
       <main className="mx-auto w-full max-w-6xl px-6 pb-20">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="font-serif text-3xl font-medium tracking-tight">Your resumes</h1>
-          <Button asChild>
-            <Link to="/" hash="templates">
-              <PlusIcon data-icon="inline-start" />
-              New resume
-            </Link>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <PlusIcon data-icon="inline-start" />
+                New resume
+                <ChevronDownIcon data-icon="inline-end" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => void createBlank()}>
+                <FileTextIcon className="size-3.5" />
+                Blank
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => void navigate({ to: '/', hash: 'templates' })}>
+                <LayoutTemplateIcon className="size-3.5" />
+                From a template
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => void navigate({ to: '/import' })}>
+                <UploadIcon className="size-3.5" />
+                Import
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {isLoading ? (
