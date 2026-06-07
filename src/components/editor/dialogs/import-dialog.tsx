@@ -17,6 +17,7 @@ import { aiActionsAvailable } from '#/lib/ai/service'
 import { engineLabel } from '#/lib/ai/engine'
 import { parseResumeJson } from '#/lib/resume'
 import type { Resume } from '#/lib/resume'
+import { TEMPLATES } from '#/lib/templates/presets'
 import { cn } from '#/lib/utils.ts'
 
 /**
@@ -31,10 +32,11 @@ export function ImportDialog({
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onImported: (resume: Resume) => void
+  onImported: (resume: Resume, templateId?: string) => void
 }) {
   const [busy, setBusy] = useState(false)
   const [canAi, setCanAi] = useState(false)
+  const [staged, setStaged] = useState<Resume | null>(null)
   const [progress, setProgress] = useState<{
     stage: 'extract' | 'structure'
     chars: number
@@ -43,6 +45,10 @@ export function ImportDialog({
   useEffect(() => {
     void aiActionsAvailable().then(setCanAi)
   }, [])
+
+  useEffect(() => {
+    if (!open) setStaged(null)
+  }, [open])
 
   async function handleAiPdf(file: File) {
     if (!canAi) {
@@ -66,9 +72,8 @@ export function ImportDialog({
       const resume = await aiImportResume(text, (chars) =>
         setProgress({ stage: 'structure', chars }),
       )
-      toast.success('Imported — review and tidy up the result')
-      onImported(resume)
-      onOpenChange(false)
+      toast.success("Imported — pick a layout")
+      setStaged(resume)
     } catch {
       toast.error('Could not import that PDF.')
     } finally {
@@ -85,9 +90,8 @@ export function ImportDialog({
       const { extractLinkedInColumns } = await import('#/lib/import/pdf-text')
       const { parseLinkedInResume } = await import('#/lib/import/linkedin')
       const resume = parseLinkedInResume(await extractLinkedInColumns(buf))
-      toast.success('Imported from LinkedIn', { id })
-      onImported(resume)
-      onOpenChange(false)
+      toast.success("Imported from LinkedIn", { id })
+      setStaged(resume)
     } catch {
       toast.error(
         'Could not read that PDF. Use LinkedIn → More → Save to PDF.',
@@ -108,9 +112,8 @@ export function ImportDialog({
         toast.error(`Invalid JSON Resume — ${result.error}`)
         return
       }
-      toast.success('Imported JSON Resume')
-      onImported(result.resume)
-      onOpenChange(false)
+      toast.success("Imported JSON Resume")
+      setStaged(result.resume)
     } finally {
       setBusy(false)
     }
@@ -120,13 +123,21 @@ export function ImportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Import a resume</DialogTitle>
+          <DialogTitle>{staged ? 'Pick a layout' : 'Import a resume'}</DialogTitle>
           <DialogDescription>
-            Bring in an existing resume to edit. Everything is parsed in your
-            browser — nothing is uploaded.
+            {staged
+              ? 'Your resume was imported. Choose a starting layout — you can change everything later.'
+              : 'Bring in an existing resume to edit. Everything is parsed in your browser — nothing is uploaded.'}
           </DialogDescription>
         </DialogHeader>
-        {progress ? (
+        {staged ? (
+          <TemplateChoice
+            onPick={(id) => {
+              onImported(staged, id)
+              onOpenChange(false)
+            }}
+          />
+        ) : progress ? (
           <ImportProgress stage={progress.stage} chars={progress.chars} />
         ) : (
           <div className="flex flex-col gap-3 pt-1">
@@ -161,6 +172,24 @@ export function ImportDialog({
         )}
       </DialogContent>
     </Dialog>
+  )
+}
+
+function TemplateChoice({ onPick }: { onPick: (templateId: string) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-2 pt-1">
+      {TEMPLATES.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          onClick={() => onPick(t.id)}
+          className="flex flex-col gap-0.5 rounded-md border border-border p-2.5 text-left transition-colors hover:border-primary/50 hover:bg-accent"
+        >
+          <span className="text-sm font-medium">{t.label}</span>
+          <span className="text-[11px] leading-snug text-muted-foreground">{t.description}</span>
+        </button>
+      ))}
+    </div>
   )
 }
 

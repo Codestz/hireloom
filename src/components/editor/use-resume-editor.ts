@@ -20,6 +20,7 @@ import { createEmptyResume, downloadResumeJson } from '#/lib/resume'
 import { slugify } from '#/lib/utils.ts'
 import type { Resume } from '#/lib/resume'
 import { getTemplate, resolveTokens } from '#/lib/templates'
+import { templateTokens } from '#/lib/templates/presets'
 import { DEFAULT_TEMPLATE_ID, DEFAULT_TOKENS } from '#/lib/templates/tokens'
 import type { ThemeTokens } from '#/lib/templates/tokens'
 
@@ -91,12 +92,13 @@ export function useResumeEditor(record: ResumeRecord) {
     saveTemplate.mutate(id)
   }
 
-  function replaceResume(resume: Resume) {
+  function replaceResume(resume: Resume, tplId?: string) {
     // Replace + reload from a clean /editor URL so the editor re-seeds and the ?import
-    // flag doesn't reopen the dialog.
-    void updateResumeData(record.id, resume).then(() =>
-      window.location.assign('/editor'),
-    )
+    // flag doesn't reopen the dialog. An imported resume drops the old canvas, so it
+    // re-decomposes into the chosen template's layout/theme on load.
+    const tasks: Array<Promise<unknown>> = [updateResumeData(record.id, resume)]
+    if (tplId) tasks.push(updateResumeTokens(record.id, templateTokens(tplId)))
+    void Promise.all(tasks).then(() => window.location.assign('/editor'))
   }
 
   // Wipe content + design back to a blank slate, then reload the editor fresh.
