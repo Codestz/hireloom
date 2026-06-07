@@ -169,6 +169,8 @@ export function CanvasDndProvider({
     <DndContext
       sensors={sensors}
       collisionDetection={collision}
+      // Scroll the canvas when dragging near its top/bottom edge (vertical document; no x-scroll).
+      autoScroll={{ threshold: { x: 0, y: 0.2 }, acceleration: 14 }}
       onDragStart={onDragStart}
       onDragMove={onDragMove}
       onDragEnd={onDragEnd}
