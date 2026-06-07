@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import type { useBlockDoc } from '#/components/blocks'
 import { Button } from '#/components/ui/button'
 import { enginePrompt } from '#/lib/ai/engine'
-import { tailorSummary } from '#/lib/ai/service'
+import { generateCoverLetter, tailorSummary } from '#/lib/ai/service'
 import { useAiReady } from '#/lib/ai/use-ai-ready'
 import { matchResume } from '#/lib/ats/match'
 import { resumeText } from '#/lib/blocks/doc-text'
@@ -49,6 +49,10 @@ export function AtsPanel({ controller }: { controller: Controller }) {
   const [tailored, setTailored] = useState('')
   const [tailoring, setTailoring] = useState(false)
   const [afterScore, setAfterScore] = useState<number | null>(null)
+
+  // Cover letter (JD-specific — lives here, not in a generic studio)
+  const [letter, setLetter] = useState('')
+  const [letterBusy, setLetterBusy] = useState(false)
 
   const text = useMemo(() => (doc.canvas ? canvasText(doc.canvas) : resumeText(doc)), [doc])
   const result = useMemo(
@@ -115,6 +119,18 @@ For each missing keyword, give ONE short line: either note I likely already cove
       toast.error('The AI request failed — check AI settings.')
     } finally {
       setTailoring(false)
+    }
+  }
+
+  async function genLetter() {
+    setLetterBusy(true)
+    setLetter('')
+    try {
+      await generateCoverLetter(text, jd, setLetter)
+    } catch {
+      toast.error('The AI request failed — check AI settings.')
+    } finally {
+      setLetterBusy(false)
     }
   }
 
@@ -260,6 +276,34 @@ For each missing keyword, give ONE short line: either note I likely already cove
               {aiText ? (
                 <div className="rounded-md border border-border bg-muted/40 p-2 text-xs leading-relaxed whitespace-pre-wrap">
                   {aiText}
+                </div>
+              ) : null}
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={genLetter}
+                disabled={letterBusy}
+                className="justify-start"
+              >
+                <WandSparklesIcon data-icon="inline-start" />
+                {letterBusy ? 'Writing…' : 'Draft a cover letter'}
+              </Button>
+              {letter ? (
+                <div className="flex flex-col gap-1.5 rounded-md border border-border bg-card p-2">
+                  <p className="text-xs leading-relaxed whitespace-pre-wrap text-foreground/90">{letter}</p>
+                  {!letterBusy ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(letter)
+                        toast.success('Cover letter copied')
+                      }}
+                      className="self-start text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Copy
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
             </div>

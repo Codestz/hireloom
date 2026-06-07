@@ -4,6 +4,7 @@ import {
   CheckIcon,
   CornerDownRightIcon,
   Loader2Icon,
+  Settings2Icon,
   SparklesIcon,
   XIcon,
 } from 'lucide-react'
@@ -11,6 +12,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { useBlockDoc } from '#/components/blocks'
 import { Button } from '#/components/ui/button'
+import { AiSettingsDialog } from '#/components/editor/dialogs/ai-settings-dialog'
+import { engineLabel } from '#/lib/ai/engine'
 import { chatTools } from '#/lib/ai/service'
 import { runTools } from '#/lib/ai/tool-engine'
 import type { ToolCall } from '#/lib/ai/tool-engine'
@@ -53,9 +56,10 @@ function loadMessages(): Array<Message> {
 }
 
 const SUGGESTIONS = [
+  'Write a professional summary from my experience',
+  'Suggest skills I should add',
   'Add a Projects section',
-  'Add a certifications section for AWS and GCP',
-  'What’s missing from my resume?',
+  'What’s missing from my résumé?',
 ]
 
 export function AiChatPanel({ controller, tokens }: { controller: Controller; tokens: ThemeTokens }) {
@@ -65,6 +69,7 @@ export function AiChatPanel({ controller, tokens }: { controller: Controller; to
   const [messages, setMessages] = useState<Array<Message>>(loadMessages)
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
   const taRef = useRef<HTMLTextAreaElement>(null)
   // @-mention autocomplete: mq = the active "@query" (null when not typing one).
@@ -205,15 +210,37 @@ export function AiChatPanel({ controller, tokens }: { controller: Controller; to
 
   if (!aiReady) {
     return (
-      <div className="p-4 text-sm text-muted-foreground">
-        The CV chat needs an AI engine — enable Chrome’s built-in AI, or add a Gemini key in AI
-        Studio → Engine. Editing, ATS match, and PDF export work without it.
+      <div className="flex flex-col gap-3 p-4 text-sm text-muted-foreground">
+        <p>
+          The Assistant needs an AI engine — enable Chrome’s built-in AI, or add your own Gemini key
+          for cloud AI in any browser. Editing, Job Match, and PDF export work without it.
+        </p>
+        <Button size="sm" variant="outline" className="justify-start" onClick={() => setSettingsOpen(true)}>
+          <Settings2Icon data-icon="inline-start" />
+          Set up an AI engine
+        </Button>
+        <AiSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       </div>
     )
   }
 
   return (
     <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <span className="flex items-center gap-1.5 text-xs font-medium">
+          <SparklesIcon className="size-3.5 text-primary" /> Assistant
+        </span>
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(true)}
+          aria-label="AI settings"
+          className="flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Settings2Icon className="size-3" />
+          {engineLabel()}
+        </button>
+      </div>
+      <AiSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
         {messages.length === 0 ? (
           <div className="flex flex-col gap-3 pt-2">

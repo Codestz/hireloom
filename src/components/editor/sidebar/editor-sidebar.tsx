@@ -3,7 +3,6 @@ import {
   FileJsonIcon,
   FileTextIcon,
   LayersIcon,
-  MessageSquareIcon,
   ShieldCheckIcon,
   SparklesIcon,
   TargetIcon,
@@ -14,7 +13,6 @@ import type { ThemeTokens } from '#/lib/templates/tokens'
 import { Button } from '#/components/ui/button'
 import { StartOverDialog } from '#/components/editor/dialogs/start-over-dialog'
 import { AiChatPanel } from '#/components/editor/panels/ai-chat-panel'
-import { AiStudioPanel } from '#/components/editor/panels/ai-studio-panel'
 import { AtsPanel } from '#/components/editor/panels/ats-panel'
 import { cn } from '#/lib/utils.ts'
 import type { useBlockDoc } from '#/components/blocks'
@@ -63,20 +61,14 @@ const MODES: Array<SidebarMode> = [
       ),
   },
   {
-    key: 'ai',
-    label: 'AI Studio',
-    icon: SparklesIcon,
-    render: (c) => <AiStudioPanel controller={c.controller} />,
-  },
-  {
     key: 'chat',
-    label: 'CV Chat',
-    icon: MessageSquareIcon,
+    label: 'Assistant',
+    icon: SparklesIcon,
     render: (c) => <AiChatPanel controller={c.controller} tokens={c.tokens} />,
   },
   {
     key: 'ats',
-    label: 'ATS match',
+    label: 'Job Match',
     icon: TargetIcon,
     render: (c) => <AtsPanel controller={c.controller} />,
   },
