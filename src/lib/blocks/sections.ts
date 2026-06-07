@@ -27,8 +27,10 @@ export interface SectionMeta {
   kind: SectionKind
   /** Label for the "add another entry" affordance (collections only). */
   addLabel: string
-  /** The entry block definition (one entry of this section). */
-  def: BlockDef<unknown>
+  /** The entry block definition. BlockDef is invariant in its data type (it both produces and
+   *  consumes T), so this heterogeneous registry holds BlockDef<any>; each entry's data is the
+   *  correct type at its own call sites. */
+  def: BlockDef<any>
 }
 
 export const SECTIONS: Array<SectionMeta> = [

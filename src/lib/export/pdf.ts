@@ -58,13 +58,14 @@ function bullets(data: Data, accent: string, mt: number): Content | null {
 function experience(d: Data, t: ResolvedTokens, variant: string): Content {
   const fs = t.baseFontSize
   const loc = S(d.location)
-  const per: Content = {
+  // `width` is valid for a column item but not on the base Content union — cast past the check.
+  const per = {
     text: period(d.period),
     color: MUTED,
     fontSize: fs * 0.9,
     alignment: 'right',
     width: 'auto',
-  }
+  } as Content
 
   if (variant === 'stacked') {
     return {
@@ -145,13 +146,14 @@ function experience(d: Data, t: ResolvedTokens, variant: string): Content {
 function education(d: Data, t: ResolvedTokens, variant: string): Content {
   const fs = t.baseFontSize
   const area = S(d.area)
-  const per: Content = {
+  // `width` is valid for a column item but not on the base Content union — cast past the check.
+  const per = {
     text: period(d.period),
     color: MUTED,
     fontSize: fs * 0.9,
     alignment: 'right',
     width: 'auto',
-  }
+  } as Content
 
   if (variant === 'stacked') {
     return {

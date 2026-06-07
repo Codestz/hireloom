@@ -43,12 +43,6 @@ const sample: Resume = {
   skills: [{ name: 'TypeScript' }, { name: 'Rust' }],
 }
 
-interface HireloomMeta {
-  sectionVariants?: Record<string, string>
-  sectionHeadings?: Record<string, string>
-  sectionOrder?: Array<string>
-}
-
 describe('resume ↔ doc round-trip', () => {
   it('preserves basics, work, education, and skills', () => {
     const back = docToResume(resumeToDoc(sample), sample)
@@ -115,7 +109,7 @@ describe('resume ↔ doc round-trip', () => {
 
   it('persists a canvas tree when present and strips a stale one when the builder is off', () => {
     const doc = resumeToDoc(sample)
-    const canvas = { id: 'box-root', kind: 'box' as const, props: { layout: 'vertical' as const }, children: [] }
+    const canvas = { id: 'box-root', kind: 'box' as const, props: {}, children: [] }
 
     // Builder on: canvas is persisted under meta.hireloom.canvas.
     const withCanvas = docToResume({ ...doc, canvas }, sample)

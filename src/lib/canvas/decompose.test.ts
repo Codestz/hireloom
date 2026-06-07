@@ -14,6 +14,7 @@ const tokens: ResolvedTokens = {
   fontBodyPdf: 'Helvetica',
   baseFontSize: 10,
   headerVariant: 'standard',
+  layout: 'single',
   space: (n) => n,
 }
 
