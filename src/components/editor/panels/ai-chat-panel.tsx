@@ -28,7 +28,7 @@ import type { ThemeTokens } from '#/lib/templates/tokens'
 import { cn } from '#/lib/utils.ts'
 
 /**
- * The CV Chat — talk to your résumé. The model reads a compact outline of the canvas and returns
+ * The CV Chat — talk to your resume. The model reads a compact outline of the canvas and returns
  * a reply plus TOOL CALLS (edit/transform/add/remove). Calls are shown as a before/after preview
  * you Apply or Discard — the model never mutates the document directly. Applying runs through the
  * ToolEngine (zod-validated; structure/style built by the canonical builders). Cloud Gemini rec.
@@ -59,7 +59,7 @@ const SUGGESTIONS = [
   'Write a professional summary from my experience',
   'Suggest skills I should add',
   'Add a Projects section',
-  'What’s missing from my résumé?',
+  'What’s missing from my resume?',
 ]
 
 export function AiChatPanel({ controller, tokens }: { controller: Controller; tokens: ThemeTokens }) {
@@ -205,7 +205,7 @@ export function AiChatPanel({ controller, tokens }: { controller: Controller; to
     controller.onSetCanvasRoot(result.root)
     setMessages((m) => m.map((x, i) => (i === index ? { ...x, applied: true } : x)))
     if (result.errors.length) toast.error(`Applied with ${result.errors.length} issue(s): ${result.errors[0]}`)
-    else toast.success('Applied to your résumé')
+    else toast.success('Applied to your resume')
   }
 
   if (!aiReady) {

@@ -45,10 +45,10 @@ export async function createResume(opts?: {
   return record
 }
 
-/** Create a new résumé seeded with the neutral sample content + a template's layout/theme tokens. */
+/** Create a new resume seeded with the neutral sample content + a template's layout/theme tokens. */
 export function createResumeFromTemplate(templateId: string): Promise<ResumeRecord> {
   return createResume({
-    title: 'Untitled résumé',
+    title: 'Untitled resume',
     data: TEMPLATE_SAMPLE,
     tokens: templateTokens(templateId),
     templateId,

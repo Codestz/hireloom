@@ -1,7 +1,7 @@
 import type { Resume } from '#/lib/resume'
 
 /**
- * A neutral, fully-populated sample résumé used to seed a new résumé from a template and to render
+ * A neutral, fully-populated sample resume used to seed a new resume from a template and to render
  * the template gallery previews. Generic enough that a first-time user immediately sees a real
  * document to edit — not someone else's CV.
  */

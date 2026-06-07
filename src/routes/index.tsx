@@ -1,16 +1,12 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import {
   ArrowRightIcon,
-  DownloadIcon,
   GaugeIcon,
   GithubIcon,
   LinkedinIcon,
   ShieldCheckIcon,
   SparklesIcon,
-  UploadIcon,
 } from 'lucide-react'
-import { useRef } from 'react'
-import { toast } from 'sonner'
 import { ThemeToggle } from '#/components/app/theme-toggle'
 import { Button } from '#/components/ui/button'
 import { TemplatesGallery } from '#/components/home/templates-gallery'
@@ -38,33 +34,9 @@ const FEATURES = [
 
 function Home() {
   const navigate = useNavigate()
-  const restoreRef = useRef<HTMLInputElement>(null)
 
   function openImport() {
     void navigate({ to: '/editor', search: { import: true } })
-  }
-
-  async function backup() {
-    const { exportBackup } = await import('#/lib/db/resumes')
-    const json = await exportBackup()
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
-    a.download = `hireloom-backup-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(a.href)
-    toast.success('Backup downloaded')
-  }
-
-  async function restore(file: File) {
-    const { importBackup } = await import('#/lib/db/resumes')
-    try {
-      const n = await importBackup(await file.text())
-      toast.success(`Restored ${n} resume${n === 1 ? '' : 's'}`)
-    } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : 'Could not restore that file.',
-      )
-    }
   }
 
   async function loadDemo() {
@@ -185,35 +157,11 @@ function Home() {
         </div>
       </section>
 
-      <footer className="mx-auto flex w-full max-w-5xl flex-col items-center gap-3 px-6 pb-16 text-center">
+      <footer className="mx-auto flex w-full max-w-5xl flex-col items-center gap-1 px-6 pb-16 text-center">
         <p className="text-xs text-muted-foreground">
-          Your resumes live only in this browser. Keep them safe:
+          Local-first · open source · no account. Back up or restore your data anytime from the
+          editor’s Export tab.
         </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => void backup()}>
-            <DownloadIcon data-icon="inline-start" />
-            Back up my data
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => restoreRef.current?.click()}
-          >
-            <UploadIcon data-icon="inline-start" />
-            Restore
-          </Button>
-          <input
-            ref={restoreRef}
-            type="file"
-            accept="application/json,.json"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) void restore(f)
-              e.target.value = ''
-            }}
-          />
-        </div>
       </footer>
     </div>
   )

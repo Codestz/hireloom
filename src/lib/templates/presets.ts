@@ -106,7 +106,7 @@ const TEMPLATE_THEME: Record<string, Partial<ThemeTokens>> = {
   compact: { layout: 'single', accent: '#0f172a', fontHeading: 'serif', fontBody: 'serif', headerVariant: 'compact', density: 0.85, baseFontSize: 9 },
 }
 
-/** Full ThemeTokens for a template id (layout + theme) — for seeding a résumé and gallery previews. */
+/** Full ThemeTokens for a template id (layout + theme) — for seeding a resume and gallery previews. */
 export function templateTokens(id: string): ThemeTokens {
   return { ...DEFAULT_TOKENS, ...(TEMPLATE_THEME[id] ?? {}) }
 }

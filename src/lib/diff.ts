@@ -4,7 +4,7 @@ export interface DiffLine {
 }
 
 /**
- * Minimal line-level diff (LCS) — enough for résumé bullets/lines. Returns the lines in order,
+ * Minimal line-level diff (LCS) — enough for resume bullets/lines. Returns the lines in order,
  * each tagged same/del/add, so the UI can render a GitHub-style before/after.
  */
 export function diffLines(a: ReadonlyArray<string>, b: ReadonlyArray<string>): Array<DiffLine> {

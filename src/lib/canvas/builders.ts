@@ -1,5 +1,5 @@
 /**
- * Canonical canvas builders — the ONE place that knows how a résumé entry/section is constructed
+ * Canonical canvas builders — the ONE place that knows how a resume entry/section is constructed
  * from primitives (the classic INK/SUB/MUTED design, token-derived spacing, the space-between
  * title/date row, the section heading + rule). Both `decompose` (import → canvas) and the AI layer
  * (compose / add-entry tools) call these, so an AI-added item is built identically to an imported

@@ -23,7 +23,7 @@ const SCALE = 192 / 612 // card width / preview page width
 /**
  * Template gallery — each card is a LIVE render of the neutral sample decomposed with the
  * template's layout + theme (scaled down), so the preview is always accurate. Clicking seeds a
- * new résumé from that template and opens the editor.
+ * new resume from that template and opens the editor.
  */
 export function TemplatesGallery() {
   const navigate = useNavigate()
@@ -45,7 +45,7 @@ export function TemplatesGallery() {
     setBusy(id)
     try {
       await createResumeFromTemplate(id)
-      // Invalidate so the editor's useLatestResume refetches the just-created template résumé
+      // Invalidate so the editor's useLatestResume refetches the just-created template resume
       // (we call the repo directly, not the useCreateResume mutation).
       await qc.invalidateQueries({ queryKey: resumeKeys.all })
       await navigate({ to: '/editor' })
@@ -90,10 +90,10 @@ export function TemplatesGallery() {
       <Dialog open={!!pending} onOpenChange={(o) => !o && !busy && setPending(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Start a new résumé?</DialogTitle>
+            <DialogTitle>Start a new resume?</DialogTitle>
             <DialogDescription>
-              This creates a new résumé from the <span className="font-medium text-foreground">{pending?.label}</span>{' '}
-              template, with sample content you can edit. Your existing résumés stay saved on this
+              This creates a new resume from the <span className="font-medium text-foreground">{pending?.label}</span>{' '}
+              template, with sample content you can edit. Your existing resumes stay saved on this
               device — nothing is replaced or lost.
             </DialogDescription>
           </DialogHeader>
