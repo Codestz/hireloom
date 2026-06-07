@@ -70,11 +70,6 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
   const [focus, setFocus] = useState<Array<MentionTarget>>([])
   const { setFocusedIds, setAffectedIds } = useAiHighlight()
 
-  // Mirror @-focus → green ring on the canvas.
-  useEffect(() => {
-    setFocusedIds(focus.map((s) => s.id))
-  }, [focus, setFocusedIds])
-
   // Mirror the latest un-applied proposal's targets → amber "AI edit" ring on the canvas.
   useEffect(() => {
     const root = doc.canvas
@@ -135,6 +130,20 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
       ta.setSelectionRange(pos, pos)
     })
   }
+
+  /** Drop a target: remove its @mention from the draft and from sticky focus. */
+  function removeFocus(t: MentionTarget) {
+    setInput((prev) => prev.split(`@${t.label}`).join('').replace(/\s{2,}/g, ' ').trimStart())
+    setFocus((f) => f.filter((x) => x.id !== t.id))
+  }
+
+  // Live focus: what's @-mentioned in the DRAFT right now, else the sticky focus from last send.
+  const liveMentions = referencedTargets(input)
+  const shownFocus = liveMentions.length ? liveMentions : focus
+  const focusedKey = shownFocus.map((t) => t.id).join(',')
+  useEffect(() => {
+    setFocusedIds(focusedKey ? focusedKey.split(',') : [])
+  }, [focusedKey, setFocusedIds])
 
   async function send(text: string) {
     const msg = text.trim()
@@ -364,10 +373,10 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
           </div>
         ) : null}
 
-        {focus.length > 0 ? (
+        {shownFocus.length > 0 ? (
           <div className="mb-1.5 flex flex-wrap items-center gap-1">
             <span className="text-[10px] text-muted-foreground">Talking about</span>
-            {focus.map((s) => (
+            {shownFocus.map((s) => (
               <span
                 key={s.id}
                 className="flex items-center gap-1 rounded-full bg-primary/10 py-0.5 pr-1 pl-2 text-[11px] font-medium text-primary"
@@ -376,7 +385,7 @@ export function AiChatPanel({ controller }: { controller: Controller }) {
                 <button
                   type="button"
                   aria-label={`Stop focusing ${s.label}`}
-                  onClick={() => setFocus((f) => f.filter((x) => x.id !== s.id))}
+                  onClick={() => removeFocus(s)}
                   className="flex size-3.5 items-center justify-center rounded-full hover:bg-primary/20"
                 >
                   <XIcon className="size-2.5" />
