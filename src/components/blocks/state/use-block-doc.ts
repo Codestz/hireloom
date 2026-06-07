@@ -8,6 +8,18 @@ import type { TextAction } from '#/lib/ai/service'
 import { headerBlock } from '#/lib/blocks/defs/header'
 import type { BlockDoc } from '#/lib/blocks/document'
 import { getSection } from '#/lib/blocks/sections'
+import type { BoxProps, CanvasBox, CanvasElement, CanvasNode } from '#/lib/canvas/model'
+import {
+  addChild,
+  insertNode,
+  moveNode,
+  removeNode,
+  setBoxRole,
+  setBoxName,
+  updateBoxProps,
+  updateElementData,
+  updateElementStyle,
+} from '#/lib/canvas/tree-ops'
 
 function mergeKnown(
   data: Record<string, unknown>,
@@ -387,6 +399,94 @@ export function useBlockDoc(initial: BlockDoc) {
     [bump],
   )
 
+  // ── Canvas builder mutations (operate on doc.canvas via pure tree-ops) ──────────────────
+  // Text/data edits do NOT bump (EditableText is uncontrolled — bumping drops the caret);
+  // structural/style/prop changes bump so the keyed canvas re-syncs.
+  const mutateCanvas = useCallback((fn: (root: CanvasBox) => CanvasBox) => {
+    setDoc((d) => (d.canvas ? { ...d, canvas: fn(d.canvas) } : d))
+  }, [])
+
+  const onCanvasUpdateData = useCallback(
+    (id: string, patch: Record<string, unknown>) => {
+      mutateCanvas((root) => updateElementData(root, id, patch))
+    },
+    [mutateCanvas],
+  )
+
+  const onCanvasUpdateStyle = useCallback(
+    (id: string, patch: CanvasElement['style']) => {
+      mutateCanvas((root) => updateElementStyle(root, id, patch))
+      bump()
+    },
+    [mutateCanvas, bump],
+  )
+
+  const onCanvasUpdateProps = useCallback(
+    (id: string, patch: Partial<BoxProps>) => {
+      mutateCanvas((root) => updateBoxProps(root, id, patch))
+      bump()
+    },
+    [mutateCanvas, bump],
+  )
+
+  const onCanvasSetRole = useCallback(
+    (id: string, role: string | undefined) => {
+      mutateCanvas((root) => setBoxRole(root, id, role))
+      bump()
+    },
+    [mutateCanvas, bump],
+  )
+
+  // Rename a section (its @-mention label). undefined/empty clears it.
+  const onCanvasRename = useCallback(
+    (id: string, name: string | undefined) => {
+      mutateCanvas((root) => setBoxName(root, id, name))
+      bump()
+    },
+    [mutateCanvas, bump],
+  )
+
+  const onCanvasAddNode = useCallback(
+    (containerId: string, node: CanvasNode) => {
+      mutateCanvas((root) => addChild(root, containerId, node))
+      bump()
+    },
+    [mutateCanvas, bump],
+  )
+
+  const onCanvasInsertNode = useCallback(
+    (containerId: string, node: CanvasNode, index?: number) => {
+      mutateCanvas((root) => insertNode(root, containerId, node, index))
+      bump()
+    },
+    [mutateCanvas, bump],
+  )
+
+  const onCanvasRemoveNode = useCallback(
+    (id: string) => {
+      mutateCanvas((root) => removeNode(root, id))
+      bump()
+    },
+    [mutateCanvas, bump],
+  )
+
+  const onCanvasMoveNode = useCallback(
+    (id: string, toParentId: string, index?: number) => {
+      mutateCanvas((root) => moveNode(root, id, toParentId, index))
+      bump()
+    },
+    [mutateCanvas, bump],
+  )
+
+  // Replace the whole canvas root (used by the AI chat after applying structured ops).
+  const onSetCanvasRoot = useCallback(
+    (root: CanvasBox) => {
+      mutateCanvas(() => root)
+      bump()
+    },
+    [mutateCanvas, bump],
+  )
+
   // The stable editing surface — provided to the document tree via context.
   const actions = useMemo(
     () => ({
@@ -407,6 +507,16 @@ export function useBlockDoc(initial: BlockDoc) {
       onApplyVariants,
       onImproveItem,
       onImproveSection,
+      onCanvasUpdateData,
+      onCanvasUpdateStyle,
+      onCanvasUpdateProps,
+      onCanvasSetRole,
+      onCanvasRename,
+      onCanvasAddNode,
+      onCanvasInsertNode,
+      onCanvasRemoveNode,
+      onCanvasMoveNode,
+      onSetCanvasRoot,
     }),
     [
       onHeaderChange,
@@ -426,6 +536,16 @@ export function useBlockDoc(initial: BlockDoc) {
       onApplyVariants,
       onImproveItem,
       onImproveSection,
+      onCanvasUpdateData,
+      onCanvasUpdateStyle,
+      onCanvasUpdateProps,
+      onCanvasSetRole,
+      onCanvasRename,
+      onCanvasAddNode,
+      onCanvasInsertNode,
+      onCanvasRemoveNode,
+      onCanvasMoveNode,
+      onSetCanvasRoot,
     ],
   )
 

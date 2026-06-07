@@ -1,10 +1,6 @@
 import {
   DownloadIcon,
-  FileJsonIcon,
-  FileTextIcon,
   LayersIcon,
-  MessageSquareIcon,
-  PaletteIcon,
   ShieldCheckIcon,
   SparklesIcon,
   TargetIcon,
@@ -12,27 +8,22 @@ import {
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import type { ThemeTokens } from '#/lib/templates/tokens'
-import { Button } from '#/components/ui/button'
-import { StartOverDialog } from '#/components/editor/dialogs/start-over-dialog'
 import { AiChatPanel } from '#/components/editor/panels/ai-chat-panel'
-import { AiStudioPanel } from '#/components/editor/panels/ai-studio-panel'
 import { AtsPanel } from '#/components/editor/panels/ats-panel'
-import { DesignPanel } from '#/components/editor/panels/design-panel'
 import { cn } from '#/lib/utils.ts'
 import type { useBlockDoc } from '#/components/blocks'
+import { ExportPanel } from './export-panel'
 import { TreePanel } from './structure-tree'
+import { NavigatorTree } from './navigator-tree'
 
-type Mode = 'build' | 'design' | 'ai' | 'chat' | 'ats' | 'export'
+type Mode = 'build' | 'chat' | 'ats' | 'export'
 type Controller = ReturnType<typeof useBlockDoc>
 
 /** Everything a sidebar panel might need — passed to each mode's `render`. */
 interface SidebarContext {
   controller: Controller
   tokens: ThemeTokens
-  activeTemplate?: string
   availableSections: Array<{ type: string; label: string }>
-  onTokensChange: (next: ThemeTokens) => void
-  onApplyTemplate: (id: string) => void
   onExportPdf: () => void
   onExportJson: () => void
   onReset: () => void
@@ -51,41 +42,27 @@ const MODES: Array<SidebarMode> = [
     key: 'build',
     label: 'Build',
     icon: LayersIcon,
-    render: (c) => (
-      <TreePanel
-        controller={c.controller}
-        availableSections={c.availableSections}
-      />
-    ),
-  },
-  {
-    key: 'design',
-    label: 'Design',
-    icon: PaletteIcon,
-    render: (c) => (
-      <DesignPanel
-        tokens={c.tokens}
-        activeTemplate={c.activeTemplate}
-        onChange={c.onTokensChange}
-        onApplyTemplate={c.onApplyTemplate}
-      />
-    ),
-  },
-  {
-    key: 'ai',
-    label: 'AI Studio',
-    icon: SparklesIcon,
-    render: (c) => <AiStudioPanel controller={c.controller} />,
+    // Canvas mode → the element Navigator (mirrors the node tree); otherwise the typed
+    // section tree. They share CanvasSelectionContext, so navigator ↔ canvas selection syncs.
+    render: (c) =>
+      c.controller.doc.canvas ? (
+        <NavigatorTree controller={c.controller} />
+      ) : (
+        <TreePanel
+          controller={c.controller}
+          availableSections={c.availableSections}
+        />
+      ),
   },
   {
     key: 'chat',
-    label: 'CV Chat',
-    icon: MessageSquareIcon,
-    render: (c) => <AiChatPanel controller={c.controller} />,
+    label: 'Assistant',
+    icon: SparklesIcon,
+    render: (c) => <AiChatPanel controller={c.controller} tokens={c.tokens} />,
   },
   {
     key: 'ats',
-    label: 'ATS match',
+    label: 'Job Match',
     icon: TargetIcon,
     render: (c) => <AtsPanel controller={c.controller} />,
   },
@@ -103,54 +80,11 @@ const MODES: Array<SidebarMode> = [
   },
 ]
 
-function ExportPanel({
-  onExportPdf,
-  onExportJson,
-  onReset,
-}: {
-  onExportPdf: () => void
-  onExportJson: () => void
-  onReset: () => void
-}) {
-  return (
-    <div className="flex flex-col gap-2 p-3">
-      <p className="px-1 pb-1 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-        Download
-      </p>
-      <Button variant="outline" className="justify-start" onClick={onExportPdf}>
-        <FileTextIcon data-icon="inline-start" />
-        PDF
-      </Button>
-      <Button
-        variant="outline"
-        className="justify-start"
-        onClick={onExportJson}
-      >
-        <FileJsonIcon data-icon="inline-start" />
-        JSON Resume
-      </Button>
-      <p className="mt-1 px-1 text-xs text-muted-foreground">
-        Text-based, ATS-safe. Generated on your device — nothing is uploaded.
-      </p>
-
-      <div className="mt-4 border-t border-border pt-3">
-        <p className="px-1 pb-1 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-          Danger zone
-        </p>
-        <StartOverDialog onConfirm={onReset} />
-      </div>
-    </div>
-  )
-}
-
 export function EditorSidebar({
   title,
   controller,
   tokens,
-  activeTemplate,
   availableSections,
-  onTokensChange,
-  onApplyTemplate,
   onExportPdf,
   onExportJson,
   onReset,
@@ -158,10 +92,7 @@ export function EditorSidebar({
   title?: string
   controller: Controller
   tokens: ThemeTokens
-  activeTemplate?: string
   availableSections: Array<{ type: string; label: string }>
-  onTokensChange: (next: ThemeTokens) => void
-  onApplyTemplate: (id: string) => void
   onExportPdf: () => void
   onExportJson: () => void
   onReset: () => void
@@ -170,10 +101,7 @@ export function EditorSidebar({
   const ctx: SidebarContext = {
     controller,
     tokens,
-    activeTemplate,
     availableSections,
-    onTokensChange,
-    onApplyTemplate,
     onExportPdf,
     onExportJson,
     onReset,

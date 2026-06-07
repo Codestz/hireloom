@@ -1,7 +1,7 @@
 /*
  * HireLoom service worker — runtime caching for offline use (VISION: local-first).
  * Network-first with cache fallback for same-origin GETs; navigations fall back to
- * the cached app shell when offline. Résumé data lives in IndexedDB, never here, and
+ * the cached app shell when offline. resume data lives in IndexedDB, never here, and
  * nothing is sent anywhere — this only caches the app's own static assets.
  */
 const CACHE = 'hireloom-runtime-v1'

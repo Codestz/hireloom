@@ -3,46 +3,34 @@ import { defaultColumn } from '#/lib/templates'
 import type { LayoutKind, ResolvedTokens } from '#/lib/templates'
 import type { HeaderData } from '#/lib/blocks/defs/header'
 import type { BlockDoc, DocSection } from '#/lib/blocks/document'
-import { PDF_VFS_FONTS } from './pdf-fonts'
 import { getSection } from '#/lib/blocks/sections'
+import {
+  A,
+  BODY,
+  INK,
+  MUTED,
+  PAGE_CONTENT_WIDTH,
+  RULE,
+  S,
+  SUB,
+  familyOf,
+  loadPdfMake,
+} from './pdf-shared'
+import type { PdfFamily } from './pdf-shared'
 
 /**
- * Our own client-side PDF export (pdfmake) — builds the file in-browser and downloads
- * it directly: no print dialog, no browser headers, on-device, selectable/ATS-safe
- * text. Mirrors each section's chosen design variant + the resolved tokens. The
- * prebuilt browser bundle is dynamic-imported so it stays out of the main chunk.
+ * Our own client-side PDF export (pdfmake) — the TYPED-SECTION renderer: builds the file in-browser
+ * from a BlockDoc + resolved tokens (no print dialog, on-device, selectable/ATS-safe text), mirroring
+ * each section's chosen design variant. The canvas (WYSIWYG) renderer lives in pdf-canvas.ts; both
+ * share the ink palette + pdfmake bootstrap from pdf-shared.ts.
  */
 
-const INK = '#171717'
-const SUB = '#525252'
-const MUTED = '#737373'
-const BODY = '#404040'
-const RULE = '#d4d4d4'
-const PAGE_CONTENT_WIDTH = 499 // A4 595.28pt − 2×48 margins
-
-const S = (v: unknown): string => (typeof v === 'string' ? v : '')
-const A = (v: unknown): Array<string> =>
-  Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
 const period = (v: unknown): string => {
   const p = (v ?? {}) as { start?: unknown; end?: unknown }
   return [S(p.start), S(p.end)].filter(Boolean).join(' – ')
 }
 
 type Data = Record<string, unknown>
-type PdfFamily = 'Roboto' | 'SourceSerif' | 'JetBrainsMono'
-
-/**
- * Map a resolved token PDF font to a registered family. Sans → Roboto (in pdfmake's
- * vfs); Serif → Source Serif 4, Mono → JetBrains Mono — static .ttf subset to Latin and
- * vendored into the vfs (see pdf-fonts.ts), since pdfmake's browser build lacks the
- * standard-14 fonts and our app serif (Fraunces) is variable woff2. So a serif/mono
- * resume exports in a real serif/mono, matching the canvas.
- */
-function familyOf(pdfFont: string): PdfFamily {
-  if (pdfFont.startsWith('Times')) return 'SourceSerif'
-  if (pdfFont.startsWith('Courier')) return 'JetBrainsMono'
-  return 'Roboto'
-}
 
 function titleRun(
   a: string,
@@ -654,68 +642,6 @@ function buildDoc(
     },
     content,
   }
-}
-
-type FontVariants = {
-  normal: string
-  bold: string
-  italics: string
-  bolditalics: string
-}
-interface PdfMakeStatic {
-  vfs?: Record<string, string>
-  fonts?: Record<string, FontVariants>
-  addVirtualFileSystem: (vfs: Record<string, string>) => void
-  addFonts: (fonts: Record<string, FontVariants>) => void
-  createPdf: (def: unknown) => { download: (filename?: string) => void }
-}
-
-// Roboto ships in pdfmake's vfs; Source Serif / JetBrains Mono are vendored (pdf-fonts).
-// Italics map to the regular cut (we only embed Regular + Bold to keep the payload small).
-const PDF_FONTS: Record<string, FontVariants> = {
-  Roboto: {
-    normal: 'Roboto-Regular.ttf',
-    bold: 'Roboto-Medium.ttf',
-    italics: 'Roboto-Italic.ttf',
-    bolditalics: 'Roboto-MediumItalic.ttf',
-  },
-  SourceSerif: {
-    normal: 'SourceSerif4-Regular.ttf',
-    bold: 'SourceSerif4-Bold.ttf',
-    italics: 'SourceSerif4-Regular.ttf',
-    bolditalics: 'SourceSerif4-Bold.ttf',
-  },
-  JetBrainsMono: {
-    normal: 'JetBrainsMono-Regular.ttf',
-    bold: 'JetBrainsMono-Bold.ttf',
-    italics: 'JetBrainsMono-Regular.ttf',
-    bolditalics: 'JetBrainsMono-Bold.ttf',
-  },
-}
-
-async function loadPdfMake(): Promise<PdfMakeStatic> {
-  const mod = (await import('pdfmake/build/pdfmake')) as unknown as {
-    default?: PdfMakeStatic
-  }
-  const pdfMake = (mod.default ?? mod) as unknown as PdfMakeStatic
-  const fontsMod = (await import('pdfmake/build/vfs_fonts')) as unknown as {
-    default?: unknown
-    vfs?: unknown
-    pdfMake?: { vfs?: unknown }
-  }
-  const f = (fontsMod.default ?? fontsMod) as {
-    vfs?: unknown
-    pdfMake?: { vfs?: unknown }
-  }
-  const base = (f.vfs ?? f.pdfMake?.vfs ?? f) as Record<string, string>
-  // pdfmake 0.3.x: register via addVirtualFileSystem/addFonts (which merge into the
-  // internal singletons). Assigning .vfs/.fonts directly doesn't reach the VFS the
-  // renderer reads, so vendored families wouldn't be found. Both merge, so re-calling
-  // each export is harmless.
-  pdfMake.addVirtualFileSystem(base) // Roboto
-  pdfMake.addVirtualFileSystem(PDF_VFS_FONTS) // Source Serif + JetBrains Mono
-  pdfMake.addFonts(PDF_FONTS)
-  return pdfMake
 }
 
 export async function downloadResumePdf(

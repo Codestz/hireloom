@@ -1,69 +1,18 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import {
-  ArrowRightIcon,
-  DownloadIcon,
-  GaugeIcon,
-  GithubIcon,
-  LinkedinIcon,
-  ShieldCheckIcon,
-  SparklesIcon,
-  UploadIcon,
-} from 'lucide-react'
-import { useRef } from 'react'
-import { toast } from 'sonner'
+import { ArrowRightIcon, GithubIcon, LinkedinIcon, ShieldCheckIcon } from 'lucide-react'
 import { ThemeToggle } from '#/components/app/theme-toggle'
 import { Button } from '#/components/ui/button'
+import { Showcase } from '#/components/home/showcase'
+import { TemplatesGallery } from '#/components/home/templates-gallery'
 import { DEMO_RESUME, DEMO_TOKENS } from '#/lib/sample/demo-resume'
 
 export const Route = createFileRoute('/')({ component: Home })
 
-const FEATURES = [
-  {
-    icon: ShieldCheckIcon,
-    title: 'Own your data',
-    body: 'Everything lives in your browser. No account, no upload, no servers holding your career.',
-  },
-  {
-    icon: SparklesIcon,
-    title: 'On-device AI',
-    body: "Sharpen bullets with Chrome's built-in model. Your words never leave the machine.",
-  },
-  {
-    icon: GaugeIcon,
-    title: 'ATS-smart',
-    body: "Live keyword match against any job post, plus parse-safety checks recruiters' robots respect.",
-  },
-]
-
 function Home() {
   const navigate = useNavigate()
-  const restoreRef = useRef<HTMLInputElement>(null)
 
   function openImport() {
-    void navigate({ to: '/editor', search: { import: true } })
-  }
-
-  async function backup() {
-    const { exportBackup } = await import('#/lib/db/resumes')
-    const json = await exportBackup()
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
-    a.download = `hireloom-backup-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(a.href)
-    toast.success('Backup downloaded')
-  }
-
-  async function restore(file: File) {
-    const { importBackup } = await import('#/lib/db/resumes')
-    try {
-      const n = await importBackup(await file.text())
-      toast.success(`Restored ${n} resume${n === 1 ? '' : 's'}`)
-    } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : 'Could not restore that file.',
-      )
-    }
+    void navigate({ to: '/import' })
   }
 
   async function loadDemo() {
@@ -91,6 +40,9 @@ function Home() {
           Hire<span className="text-primary">loom</span>
         </span>
         <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+            <a href="#templates">Templates</a>
+          </Button>
           <Button variant="ghost" size="icon" asChild>
             <a
               href="https://github.com/Codestz/hireloom"
@@ -136,6 +88,9 @@ function Home() {
             <LinkedinIcon data-icon="inline-start" />
             Import from LinkedIn
           </Button>
+          <Button size="lg" variant="ghost" asChild>
+            <a href="#templates">Browse templates</a>
+          </Button>
         </div>
 
         <div className="flex flex-col items-center gap-2">
@@ -153,49 +108,40 @@ function Home() {
         </div>
       </main>
 
-      <section className="mx-auto w-full max-w-5xl px-6 pb-12">
-        <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3">
-          {FEATURES.map(({ icon: Icon, title, body }) => (
-            <div key={title} className="flex flex-col gap-2 bg-card p-6">
-              <Icon className="size-5 text-primary" />
-              <h3 className="text-sm font-semibold">{title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {body}
-              </p>
-            </div>
-          ))}
+      <Showcase />
+
+      <section id="templates" className="mx-auto w-full max-w-5xl scroll-mt-20 px-6 pb-16">
+        <div className="mb-6 flex flex-col items-center gap-1.5 text-center">
+          <h2 className="font-serif text-2xl font-medium tracking-tight">Start from a template</h2>
+          <p className="max-w-md text-sm text-muted-foreground">
+            Pick a layout — single column, a two-column sidebar, a header band, or compact. Edit
+            everything on the canvas, with AI.
+          </p>
+        </div>
+        <TemplatesGallery />
+      </section>
+
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 border-t border-border px-6 py-16 text-center">
+        <h2 className="font-serif text-3xl font-medium tracking-tight">Ready to build?</h2>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button size="lg" asChild>
+            <Link to="/editor">
+              Start a resume
+              <ArrowRightIcon data-icon="inline-end" />
+            </Link>
+          </Button>
+          <Button size="lg" variant="outline" onClick={openImport}>
+            <LinkedinIcon data-icon="inline-start" />
+            Import a resume
+          </Button>
         </div>
       </section>
 
-      <footer className="mx-auto flex w-full max-w-5xl flex-col items-center gap-3 px-6 pb-16 text-center">
+      <footer className="mx-auto flex w-full max-w-5xl flex-col items-center gap-1 px-6 pb-16 text-center">
         <p className="text-xs text-muted-foreground">
-          Your resumes live only in this browser. Keep them safe:
+          Local-first · open source · no account. Back up or restore your data anytime from the
+          editor’s Export tab.
         </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => void backup()}>
-            <DownloadIcon data-icon="inline-start" />
-            Back up my data
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => restoreRef.current?.click()}
-          >
-            <UploadIcon data-icon="inline-start" />
-            Restore
-          </Button>
-          <input
-            ref={restoreRef}
-            type="file"
-            accept="application/json,.json"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) void restore(f)
-              e.target.value = ''
-            }}
-          />
-        </div>
       </footer>
     </div>
   )

@@ -2,6 +2,8 @@ import { createEmptyResume, ensureResumeIds } from '#/lib/resume'
 import type { Resume } from '#/lib/resume'
 import { DEFAULT_TEMPLATE_ID, DEFAULT_TOKENS } from '#/lib/templates/tokens'
 import type { ThemeTokens } from '#/lib/templates/tokens'
+import { templateTokens } from '#/lib/templates/presets'
+import { TEMPLATE_SAMPLE } from '#/lib/sample/template-sample'
 import { db } from './db'
 import type { ResumeRecord } from './db'
 
@@ -41,6 +43,16 @@ export async function createResume(opts?: {
   }
   await db.resumes.add(record)
   return record
+}
+
+/** Create a new resume seeded with the neutral sample content + a template's layout/theme tokens. */
+export function createResumeFromTemplate(templateId: string): Promise<ResumeRecord> {
+  return createResume({
+    title: 'Untitled resume',
+    data: TEMPLATE_SAMPLE,
+    tokens: templateTokens(templateId),
+    templateId,
+  })
 }
 
 /** Overwrite resume content (the editor's autosave target). Bumps updatedAt. */

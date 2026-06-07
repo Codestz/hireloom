@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { RichValueSchema } from './rich'
+import { CanvasBoxSchema } from '#/lib/canvas/schema'
 
 /**
  * Canonical resume model = JSON Resume schema (https://jsonresume.org/schema).
@@ -151,6 +152,8 @@ export const MetaSchema = z.object({
       sectionColumns: z.record(z.string(), z.string()).optional(),
       sectionHeadings: z.record(z.string(), z.string()).optional(),
       customLines: z.array(z.string()).optional(),
+      /** Canvas builder node tree (the root Box). See lib/canvas/model.ts. */
+      canvas: CanvasBoxSchema.optional(),
     })
     .optional(),
 })

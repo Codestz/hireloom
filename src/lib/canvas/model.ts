@@ -1,0 +1,158 @@
+/**
+ * Canvas builder model — the node tree the page-builder edits.
+ *
+ * Philosophy (see .docs/builder-rework-plan.md): PURE PRIMITIVES. Nothing is baked into
+ * containers. A page is a single root `Box`; everything is either a `Box` (the only
+ * container: vertical/horizontal layout, nestable — a horizontal Box with `span`ned
+ * children IS a grid/row) or a leaf `Element` (heading/text/list/separator/divider/…).
+ * "Section", "Row", "Columns" are not types — they are starter compositions of Boxes.
+ *
+ * This lives in `lib` so both the data layer and the UI depend on it, never the reverse.
+ * It is layout-only; semantic meaning for export/ATS is carried by an optional `role` on a
+ * Box and reconstructed by the bridge (see decompose/recompose, WS-A).
+ */
+
+/** How a Box arranges its children (Elementor "Container" model). */
+export type BoxDisplay = 'flex' | 'grid' | 'block'
+export type FlexDirection = 'row' | 'column'
+
+/** Leaf element kinds. Anything that is not a `box`. */
+export type ElementKind =
+  | 'heading'
+  | 'text'
+  | 'list'
+  | 'separator'
+  | 'divider'
+  | 'spacer'
+  | 'image'
+  | 'icon'
+  | 'button'
+
+/** The glyph a standalone `separator` element draws between two siblings. */
+export type SeparatorVariant = 'dot' | 'line' | 'dash' | 'slash' | 'pipe' | 'bullet'
+
+export type BoxAlign = 'start' | 'center' | 'end' | 'stretch' | 'baseline'
+export type BoxJustify = 'start' | 'center' | 'end' | 'between' | 'around'
+export type TextAlign = 'left' | 'center' | 'right' | 'justify'
+
+export interface BoxProps {
+  /** How children are arranged. Defaults to 'flex'. */
+  display?: BoxDisplay
+  /** Flex main axis (display:flex only). Defaults to 'column'. */
+  direction?: FlexDirection
+  /** Number of equal columns (display:grid only). Defaults to 2. */
+  gridColumns?: number
+  /** Spacing between children, in px. */
+  gap?: number
+  /** Inner padding, in px. */
+  pad?: number
+  /** Outer margin, in px. */
+  margin?: number
+  align?: BoxAlign
+  justify?: BoxJustify
+  /** Allow children to wrap (flex row). */
+  wrap?: boolean
+  /** CSS color / token for background. */
+  bg?: string
+  /** CSS border shorthand. */
+  border?: string
+  /** Border radius, in px. */
+  radius?: number
+  /** Width in /12 units when this Box sits inside a flex-row parent (or grid cell). */
+  span?: number
+  /** Font family for this box's subtree (cascades to descendants unless they override). */
+  fontFamily?: 'sans' | 'serif' | 'mono'
+}
+
+export interface ElementStyle {
+  fontFamily?: 'sans' | 'serif' | 'mono'
+  fontSize?: number
+  fontWeight?: number
+  italic?: boolean
+  underline?: boolean
+  color?: string
+  align?: TextAlign
+  marginTop?: number
+  marginBottom?: number
+}
+
+export interface CanvasBox {
+  id: string
+  kind: 'box'
+  /** Optional semantic hint for export/ATS; layout is independent of it. */
+  role?: string
+  /**
+   * Human-friendly, UNIQUE address label for a section box (the `@`-mention name). Auto-derived
+   * from the heading/role and de-duplicated; user-renameable. `role` stays the semantic anchor.
+   * Only meaningful on top-level section boxes; see lib/canvas/document-index.ts.
+   */
+  name?: string
+  props: BoxProps
+  children: Array<CanvasNode>
+}
+
+export interface CanvasElement {
+  id: string
+  kind: ElementKind
+  /**
+   * Element payload. Expected shapes by kind:
+   * - heading:   { text: string; level?: 1 | 2 | 3 }
+   * - text:      { text: string }
+   * - list:      { items: string[]; ordered?: boolean }
+   * - separator: { variant: SeparatorVariant }
+   * - divider:   { thickness?: number }
+   * - spacer:    { size: number }
+   * - image:     { src: string; alt?: string; width?: number }
+   * - icon:      { name: string }
+   * - button:    { label: string; href?: string }
+   */
+  data: Record<string, unknown>
+  style?: ElementStyle
+}
+
+export type CanvasNode = CanvasBox | CanvasElement
+
+/** A builder document is a single root Box. */
+export interface CanvasDoc {
+  root: CanvasBox
+}
+
+export function isBox(node: CanvasNode): node is CanvasBox {
+  return node.kind === 'box'
+}
+
+/** True when a Box lays its children out in a horizontal row (flex + direction row). */
+export function isHorizontal(box: CanvasBox): boolean {
+  return (box.props.display ?? 'flex') === 'flex' && box.props.direction === 'row'
+}
+
+/** Mint a fresh, kind-prefixed node id. */
+export function newNodeId(kind: 'box' | ElementKind): string {
+  return `${kind}-${crypto.randomUUID().slice(0, 8)}`
+}
+
+/**
+ * Create an empty flex Box with the given main-axis direction (defaults 'column').
+ * Pass extra `props` to override display/grid/spacing/etc.
+ */
+export function makeBox(
+  direction: FlexDirection = 'column',
+  props: Partial<BoxProps> = {},
+  children: Array<CanvasNode> = [],
+): CanvasBox {
+  return {
+    id: newNodeId('box'),
+    kind: 'box',
+    props: { display: 'flex', direction, ...props },
+    children,
+  }
+}
+
+/** Create a leaf element of the given kind. */
+export function makeElement(
+  kind: ElementKind,
+  data: Record<string, unknown> = {},
+  style?: ElementStyle,
+): CanvasElement {
+  return { id: newNodeId(kind), kind, data, ...(style ? { style } : {}) }
+}

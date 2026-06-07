@@ -19,9 +19,12 @@ import type { TextAction } from '#/lib/ai/service'
 export function AiTextMenu({
   getText,
   onApply,
+  triggerClassName,
 }: {
   getText: () => string
   onApply: (text: string) => void
+  /** Override the trigger button styling (e.g. when hosted in the node chip). */
+  triggerClassName?: string
 }) {
   const [busy, setBusy] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -32,9 +35,11 @@ export function AiTextMenu({
       toast.error('Nothing to improve yet.')
       return
     }
+    // Only the real editor — NOT the chip's contenteditable="false" span (which would match
+    // a bare [contenteditable] selector and come first in DOM, so the stream would land there).
     const el = triggerRef.current
       ?.closest('[data-ai-row]')
-      ?.querySelector<HTMLElement>('[contenteditable]')
+      ?.querySelector<HTMLElement>('[contenteditable="true"]')
     setBusy(true)
     const id = toast.loading('Improving on your device…')
     try {
@@ -64,7 +69,10 @@ export function AiTextMenu({
           title="AI actions"
           contentEditable={false}
           disabled={busy}
-          className="flex size-4 shrink-0 items-center justify-center rounded text-neutral-300 opacity-0 transition-opacity group-hover/row:opacity-100 hover:text-primary data-[state=open]:text-primary data-[state=open]:opacity-100"
+          className={
+            triggerClassName ??
+            'flex size-4 shrink-0 items-center justify-center rounded text-neutral-300 opacity-0 transition-opacity group-hover/row:opacity-100 hover:text-primary data-[state=open]:text-primary data-[state=open]:opacity-100'
+          }
         >
           {busy ? (
             <Loader2Icon className="size-3 animate-spin" />

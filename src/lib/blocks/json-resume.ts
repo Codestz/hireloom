@@ -241,7 +241,7 @@ export function resumeToDoc(resume: Resume): BlockDoc {
     sections.sort((x, y) => rank(x.type) - rank(y.type))
   }
 
-  return { header, sections }
+  return { header, sections, ...(hl?.canvas ? { canvas: hl.canvas } : {}) }
 }
 
 function items(doc: BlockDoc, type: string): Array<Record<string, unknown>> {
@@ -332,6 +332,10 @@ export function docToResume(doc: BlockDoc, base?: Resume): Resume {
   }
   const customLines = strArray(items(doc, 'custom')[0]?.lines)
 
+  // Strip any persisted canvas from the base before re-adding it only when present — else a
+  // previously-saved tree would linger after the builder is turned off (and reappear on reload).
+  const { canvas: _baseCanvas, ...baseHireloom } = base?.meta?.hireloom ?? {}
+
   return {
     ...base,
     basics: {
@@ -357,12 +361,13 @@ export function docToResume(doc: BlockDoc, base?: Resume): Resume {
     meta: {
       ...base?.meta,
       hireloom: {
-        ...base?.meta?.hireloom,
+        ...baseHireloom,
         sectionOrder: doc.sections.map((s) => s.type),
         sectionVariants,
         sectionColumns,
         sectionHeadings,
         ...(customLines.length ? { customLines } : {}),
+        ...(doc.canvas ? { canvas: doc.canvas } : {}),
       },
     },
   }

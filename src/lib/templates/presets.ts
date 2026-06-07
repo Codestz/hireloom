@@ -1,12 +1,12 @@
-import type { FontOption } from './tokens'
+import { DEFAULT_TOKENS } from './tokens'
+import type { FontOption, LayoutKind, ThemeTokens } from './tokens'
 
 /**
- * Templates = document LAYOUT (the real templating). Styling — font, accent, density —
- * stays separate (Design panel) and applies on top of any layout. Based on the three
- * archetypes that dominate 2026 CV design: single column (ATS-safe), two-column with a
- * side rail (human-first), and a full-width header band.
+ * Templates = document LAYOUT (the real templating). Styling — font, accent, density — applies on
+ * top of any layout. Based on the three archetypes that dominate 2026 CV design: single column
+ * (ATS-safe), two-column with a side rail (human-first), and a full-width header band.
+ * `LayoutKind` lives in ./tokens (single source, mirrors the schema) — imported here, not redefined.
  */
-export type LayoutKind = 'single' | 'sidebar' | 'band'
 export type Column = 'side' | 'main'
 
 export interface Template {
@@ -70,6 +70,20 @@ export const TEMPLATES: Array<Template> = [
       languages: 'inline',
     },
   },
+  {
+    id: 'compact',
+    label: 'Compact',
+    description: 'Dense, single-column serif — fits a deep history on one page.',
+    layout: 'single',
+    font: 'serif',
+    density: 0.85,
+    variants: {
+      ...COMMON,
+      certifications: 'list',
+      skills: 'inline',
+      languages: 'inline',
+    },
+  },
 ]
 
 const SIDEBAR_TYPES = new Set(['skills', 'languages', 'certifications'])
@@ -81,4 +95,17 @@ export function defaultColumn(type: string): Column {
 
 export function getTemplate(id: string | undefined): Template | undefined {
   return TEMPLATES.find((t) => t.id === id)
+}
+
+/** Per-template theme overrides — distinct layout + accent/font so the gallery reads as variety. */
+const TEMPLATE_THEME: Record<string, Partial<ThemeTokens>> = {
+  'ats-safe': { layout: 'single', accent: '#2f6b4f', fontHeading: 'sans', fontBody: 'sans', headerVariant: 'standard' },
+  'two-column': { layout: 'sidebar', accent: '#334155', fontHeading: 'sans', fontBody: 'sans', headerVariant: 'standard' },
+  band: { layout: 'band', accent: '#4f46e5', fontHeading: 'sans', fontBody: 'sans', headerVariant: 'centered' },
+  compact: { layout: 'single', accent: '#0f172a', fontHeading: 'serif', fontBody: 'serif', headerVariant: 'compact', density: 0.85, baseFontSize: 9 },
+}
+
+/** Full ThemeTokens for a template id (layout + theme) — for seeding a resume and gallery previews. */
+export function templateTokens(id: string): ThemeTokens {
+  return { ...DEFAULT_TOKENS, ...(TEMPLATE_THEME[id] ?? {}) }
 }

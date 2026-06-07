@@ -30,6 +30,8 @@ export interface ResolvedTokens {
   fontBodyPdf: string
   baseFontSize: number
   headerVariant: 'standard' | 'centered' | 'compact'
+  /** Structural arrangement: single column, left side-rail, or accent band. */
+  layout: 'single' | 'sidebar' | 'band'
   /** Density-scaled spacing — same numbers used as px (canvas) and pt (PDF). */
   space: (n: number) => number
 }
@@ -46,6 +48,7 @@ export function resolveTokens(tokens: ThemeTokens): ResolvedTokens {
     fontBodyPdf: body.pdf,
     baseFontSize: tokens.baseFontSize || 10,
     headerVariant: tokens.headerVariant ?? 'standard',
+    layout: tokens.layout ?? 'single',
     space: (n) => Math.round(n * density),
   }
 }

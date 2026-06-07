@@ -19,6 +19,10 @@ export type PageSize = 'a4' | 'letter'
 export const HEADER_VARIANTS = ['standard', 'centered', 'compact'] as const
 export type HeaderVariant = (typeof HEADER_VARIANTS)[number]
 
+// Structural arrangement the builder produces: one column, a left side-rail, or an accent band.
+export const LAYOUT_KINDS = ['single', 'sidebar', 'band'] as const
+export type LayoutKind = (typeof LAYOUT_KINDS)[number]
+
 export const ThemeTokensSchema = z.object({
   accent: z.string(), // hex
   fontHeading: z.enum(FONT_OPTIONS),
@@ -26,6 +30,7 @@ export const ThemeTokensSchema = z.object({
   density: z.number().min(0.7).max(1.3), // spacing multiplier
   baseFontSize: z.number().min(9).max(13), // pt
   headerVariant: z.enum(HEADER_VARIANTS).optional(),
+  layout: z.enum(LAYOUT_KINDS).optional(),
 })
 
 export type ThemeTokens = z.infer<typeof ThemeTokensSchema>
