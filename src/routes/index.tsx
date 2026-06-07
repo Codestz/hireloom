@@ -146,17 +146,36 @@ function Home() {
         <TemplatesGallery />
       </section>
 
-      <section className="mx-auto w-full max-w-5xl px-6 pb-12">
-        <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3">
+      <section className="mx-auto w-full max-w-5xl px-6 pb-16">
+        <div className="grid gap-5 sm:grid-cols-3">
           {FEATURES.map(({ icon: Icon, title, body }) => (
-            <div key={title} className="flex flex-col gap-2 bg-card p-6">
-              <Icon className="size-5 text-primary" />
+            <div
+              key={title}
+              className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-md"
+            >
+              <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Icon className="size-5" />
+              </span>
               <h3 className="text-sm font-semibold">{title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {body}
-              </p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 border-t border-border px-6 py-16 text-center">
+        <h2 className="font-serif text-3xl font-medium tracking-tight">Ready to build?</h2>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button size="lg" asChild>
+            <Link to="/editor">
+              Start a resume
+              <ArrowRightIcon data-icon="inline-end" />
+            </Link>
+          </Button>
+          <Button size="lg" variant="outline" onClick={openImport}>
+            <LinkedinIcon data-icon="inline-start" />
+            Import a resume
+          </Button>
         </div>
       </section>
 
