@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { CanvasPreview } from '#/components/blocks/canvas-tree/canvas-preview'
 import { decompose } from '#/lib/canvas/decompose'
 import { resumeToDoc } from '#/lib/blocks/json-resume'
 import { resolveTokens } from '#/lib/templates'
 import { TEMPLATES, templateTokens } from '#/lib/templates/presets'
 import { TEMPLATE_SAMPLE } from '#/lib/sample/template-sample'
-import { createResumeFromTemplate } from '#/lib/db/resumes'
+import { createResumeFromTemplate, resumeKeys } from '#/lib/db'
 
 const SCALE = 192 / 612 // card width / preview page width
 
@@ -17,6 +18,7 @@ const SCALE = 192 / 612 // card width / preview page width
  */
 export function TemplatesGallery() {
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const [busy, setBusy] = useState<string | null>(null)
 
   const previews = useMemo(
@@ -33,6 +35,9 @@ export function TemplatesGallery() {
     setBusy(id)
     try {
       await createResumeFromTemplate(id)
+      // Invalidate so the editor's useLatestResume refetches the just-created template résumé
+      // (we call the repo directly, not the useCreateResume mutation).
+      await qc.invalidateQueries({ queryKey: resumeKeys.all })
       await navigate({ to: '/editor' })
     } finally {
       setBusy(null)
