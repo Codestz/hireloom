@@ -13,6 +13,7 @@ import { useRef } from 'react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '#/components/app/theme-toggle'
 import { Button } from '#/components/ui/button'
+import { TemplatesGallery } from '#/components/home/templates-gallery'
 import { DEMO_RESUME, DEMO_TOKENS } from '#/lib/sample/demo-resume'
 
 export const Route = createFileRoute('/')({ component: Home })
@@ -91,6 +92,9 @@ function Home() {
           Hire<span className="text-primary">loom</span>
         </span>
         <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+            <a href="#templates">Templates</a>
+          </Button>
           <Button variant="ghost" size="icon" asChild>
             <a
               href="https://github.com/Codestz/hireloom"
@@ -136,6 +140,9 @@ function Home() {
             <LinkedinIcon data-icon="inline-start" />
             Import from LinkedIn
           </Button>
+          <Button size="lg" variant="ghost" asChild>
+            <a href="#templates">Browse templates</a>
+          </Button>
         </div>
 
         <div className="flex flex-col items-center gap-2">
@@ -152,6 +159,17 @@ function Home() {
           </button>
         </div>
       </main>
+
+      <section id="templates" className="mx-auto w-full max-w-5xl scroll-mt-20 px-6 pb-16">
+        <div className="mb-6 flex flex-col items-center gap-1.5 text-center">
+          <h2 className="font-serif text-2xl font-medium tracking-tight">Start from a template</h2>
+          <p className="max-w-md text-sm text-muted-foreground">
+            Pick a layout — single column, a two-column sidebar, a header band, or compact. Edit
+            everything on the canvas, with AI.
+          </p>
+        </div>
+        <TemplatesGallery />
+      </section>
 
       <section className="mx-auto w-full max-w-5xl px-6 pb-12">
         <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3">
